@@ -56,6 +56,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
   const [showBreakdown, setShowBreakdown] = useState(false); // Toggle for calorie breakdown
   const [units, setUnits] = useState<UnitSystem>(userData?.units || 'metric');
   
+  const [recommendation, setRecommendation] = useState<string | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
+
+  const API_BASE_URL = "http://localhost:8000";
+
   // Convert userData to stats format
   const getInitialStats = () => {
     if (!userData) {
@@ -186,25 +191,95 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
     });
   }, [stats]);
 
-  // --- Mock LLM Service ---
-  const fetchLLMResponse = async (prompt: string, type: 'food' | 'activity' | 'other'): Promise<string> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (type === 'food') {
-          const num = parseInt(prompt.replace(/\D/g, '')) || 1;
-          if (prompt.includes('egg')) resolve(`${num * 70}`);
-          else if (prompt.includes('chicken')) resolve('300');
-          else resolve(`${Math.floor(Math.random() * 400) + 50}`);
-        } 
-        else if (type === 'activity') {
-           resolve(`${Math.floor(Math.random() * 300) + 50}`);
-        } 
-        else {
-           resolve("recorded");
-        }
-      }, 600);
-    });
+  // --- API Service ---
+  
+  const estimateEntry = async (entryType: 'food' | 'activity', text: string, weightKg?: number): Promise<string | null> => {
+    try {
+      const payload = {
+        entry_type: entryType,
+        entry_text: text,
+        weight_kg: weightKg || null
+      };
+
+      const res = await fetch(`${API_BASE_URL}/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      return data.estimated_calories ? String(data.estimated_calories) : null;
+    } catch (error) {
+      console.error("Estimation failed", error);
+      return null;
+    }
   };
+
+  const getDailyRecommendation = async () => {
+    setRecommendationLoading(true);
+    setRecommendation(null);
+    
+    try {
+        // Collect data
+        const tdee = metrics.tdee !== '--' ? parseFloat(metrics.tdee) : 2000;
+        const totalConsumed = gainEntries.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
+        const totalBurned = lostEntries.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
+        const netKcal = totalConsumed - totalBurned;
+        const targetKcal = metrics.calorieGoal !== '--' ? parseFloat(metrics.calorieGoal) : 2000;
+        
+        const summaryRequest = {
+            measurement_system: units,
+            user_profile: {
+                age: parseFloat(stats.age),
+                sex: stats.gender,
+                weight: parseFloat(stats.weight),
+                height: parseFloat(stats.height),
+                goal: stats.fitnessGoal,
+                target_weight: parseFloat(stats.targetWeight),
+                activity_level: stats.activityLevel,
+                weekly_workouts: parseFloat(stats.workoutFrequency)
+            },
+            metabolic_data: {
+                bmr_kcal: metrics.bmr !== '--' ? parseFloat(metrics.bmr) : 0,
+                activity_factor: 1.2, // Simplified fallback, could map from stats.activityLevel
+                baseline_needs_kcal: tdee,
+                estimated_daily_needs_kcal: tdee,
+                target_kcal: targetKcal
+            },
+            daily_totals: {
+                total_consumed_kcal: totalConsumed,
+                total_burned_kcal: totalBurned,
+                net_kcal: netKcal,
+                difference_from_target_kcal: netKcal - targetKcal
+            },
+            additional_info: {
+                sleep_hours: 8, // Placeholder or extract from 'Other' entries if tagged
+                mood: "normal",
+                notes: otherEntries.map(e => `${e.category}: ${e.input}`).join('; ')
+            },
+            food_summary: gainEntries.filter(e => e.input && e.calories).map(e => `${e.input} (${e.calories} kcal)`),
+            activity_summary: lostEntries.filter(e => e.activity && e.calories).map(e => `${e.activity} ${e.duration} (${e.calories} kcal)`)
+        };
+
+        const res = await fetch(`${API_BASE_URL}/recommendation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(summaryRequest)
+        });
+
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        setRecommendation(data.recommendation);
+
+    } catch (e) {
+        console.error("Recommendation failed", e);
+        setRecommendation("Could not generate recommendation at this time.");
+    } finally {
+        setRecommendationLoading(false);
+    }
+  };
+
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -219,7 +294,9 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
     newEntries[index].loading = true;
     setGainEntries(newEntries);
 
-    const calories = await fetchLLMResponse(currentEntry.input, 'food');
+    // Call API
+    const calories = await estimateEntry('food', currentEntry.input);
+    
     setGainEntries((prev) => prev.map((entry, i) => 
         i === index ? { ...entry, loading: false, calories: calories } : entry
     ));
@@ -260,7 +337,8 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
     newEntries[index].loading = true;
     setLostEntries(newEntries);
 
-    const calories = await fetchLLMResponse(`${currentEntry.activity} ${currentEntry.duration}`, 'activity');
+    const calories = await estimateEntry('activity', `${currentEntry.activity} for ${currentEntry.duration}`, parseFloat(stats.weight));
+    
     setLostEntries((prev) => prev.map((entry, i) => 
         i === index ? { ...entry, loading: false, calories: calories } : entry
     ));
@@ -301,9 +379,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
     newEntries[index].loading = true;
     setOtherEntries(newEntries);
 
-    const resp = await fetchLLMResponse(currentEntry.input, 'other');
+    // Simulate save or just confirm
+    await new Promise(r => setTimeout(r, 400));
+    
     setOtherEntries((prev) => prev.map((entry, i) => 
-        i === index ? { ...entry, loading: false, response: resp } : entry
+        i === index ? { ...entry, loading: false, response: 'recorded' } : entry
     ));
   };
 
@@ -336,11 +416,13 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
   const toggleSummarize = () => {
     if (isSummarized) {
       setIsSummarized(false);
+      setRecommendation(null);
     } else {
       setGainEntries(prev => prev.filter(e => e.input.trim() !== ''));
       setLostEntries(prev => prev.filter(e => e.activity.trim() !== '' && e.duration.trim() !== ''));
       setOtherEntries(prev => prev.filter(e => e.input.trim() !== '' && e.category.trim() !== ''));
       setIsSummarized(true);
+      getDailyRecommendation();
     }
   };
 
@@ -376,6 +458,25 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
       </header>
 
       <main className="fa-main">
+        
+        {/* Recommendation Section (Visible when summarized) */}
+        {(recommendation || recommendationLoading) && isSummarized && (
+           <section className="fa-card fa-recommendation-card" style={{ padding: '2rem', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                 <div style={{ background: '#ef4444', padding: '0.75rem', borderRadius: '50%', color: 'white' }}>
+                    <Check size={24} />
+                 </div>
+                 <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem', color: 'white' }}>Daily Analysis</h3>
+                    {recommendationLoading ? (
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>Analyzing your data with AI...</div>
+                    ) : (
+                        <p style={{ lineHeight: 1.6, color: 'rgba(255,255,255,0.9)', fontSize: '1rem' }}>{recommendation}</p>
+                    )}
+                 </div>
+              </div>
+           </section>
+        )}
 
         {/* --- Biometrics Bar --- */}
         <section className="fa-card fa-bio">
@@ -633,6 +734,17 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                         setGainEntries(prev => [...prev, { id: newId, meal: 'Snack', input: '', calories: null, loading: false, locked: false }]);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSummarized) {
+                        e.preventDefault();
+                        const newId = generateId();
+                        setGainEntries(prev => [...prev, { id: newId, meal: 'Snack', input: '', calories: null, loading: false, locked: false }]);
+                        setTimeout(() => {
+                          const newInput = gainInputRefs.current[newId];
+                          if (newInput) newInput.focus();
+                        }, 50);
+                      }
+                    }}
                   />
                   <div className="fa-entry-result fa-entry-result--gain">
                     {entry.loading
@@ -669,6 +781,17 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                         setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSummarized) {
+                        e.preventDefault();
+                        const newId = generateId();
+                        setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
+                        setTimeout(() => {
+                          const newInput = lostInputRefs.current[`${newId}-act`];
+                          if (newInput) newInput.focus();
+                        }, 50);
+                      }
+                    }}
                   />
                   <input
                     disabled={isSummarized || entry.loading}
@@ -677,6 +800,17 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                     className="fa-entry-input fa-entry-input--sm"
                     value={entry.duration}
                     onChange={(e) => handleLostInput(idx, 'duration', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSummarized) {
+                        e.preventDefault();
+                        const newId = generateId();
+                        setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
+                        setTimeout(() => {
+                          const newInput = lostInputRefs.current[`${newId}-act`];
+                          if (newInput) newInput.focus();
+                        }, 50);
+                      }
+                    }}
                   />
                   <div className="fa-entry-result fa-entry-result--lost">
                     {entry.loading
@@ -713,6 +847,17 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                         setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSummarized) {
+                        e.preventDefault();
+                        const newId = generateId();
+                        setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
+                        setTimeout(() => {
+                          const newInput = otherInputRefs.current[`${newId}-cat`];
+                          if (newInput) newInput.focus();
+                        }, 50);
+                      }
+                    }}
                   />
                   <input
                     disabled={isSummarized || entry.loading}
@@ -721,6 +866,17 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                     className="fa-entry-input"
                     value={entry.input}
                     onChange={(e) => handleOtherInput(idx, 'input', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSummarized) {
+                        e.preventDefault();
+                        const newId = generateId();
+                        setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
+                        setTimeout(() => {
+                          const newInput = otherInputRefs.current[`${newId}-cat`];
+                          if (newInput) newInput.focus();
+                        }, 50);
+                      }
+                    }}
                   />
                   <div className="fa-entry-result fa-entry-result--other">
                     {entry.loading
