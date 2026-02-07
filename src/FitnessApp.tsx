@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft } from 'lucide-react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import PdfReport from './components/PdfReport';
 import './FitnessApp.css';
 
 // --- Types ---
@@ -767,32 +769,33 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
             <div className="fa-col-body">
               {lostEntries.map((entry, idx) => (
                 <div key={entry.id} className="fa-entry">
-                  <input
-                    ref={el => { lostInputRefs.current[`${entry.id}-act`] = el; }}
+                  <select
+                    ref={el => { lostInputRefs.current[`${entry.id}-act`] = el as any; }}
                     disabled={isSummarized || entry.loading}
-                    type="text"
-                    placeholder="Activity name"
                     className="fa-entry-input"
                     value={entry.activity}
                     onChange={(e) => {
                       handleLostInput(idx, 'activity', e.target.value);
-                      if (idx === lostEntries.length - 1 && e.target.value.trim() && lostEntries[idx].activity === '') {
+                      if (idx === lostEntries.length - 1 && e.target.value && lostEntries[idx].activity === '') {
                         const newId = generateId();
                         setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
                       }
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isSummarized) {
-                        e.preventDefault();
-                        const newId = generateId();
-                        setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
-                        setTimeout(() => {
-                          const newInput = lostInputRefs.current[`${newId}-act`];
-                          if (newInput) newInput.focus();
-                        }, 50);
-                      }
-                    }}
-                  />
+                  >
+                    <option value="" disabled>Select Activity</option>
+                    <option value="Walking">Walking</option>
+                    <option value="Running">Running</option>
+                    <option value="Jumping Jacks">Jumping Jacks</option>
+                    <option value="Cycling">Cycling</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Yoga">Yoga</option>
+                    <option value="Weightlifting">Weightlifting</option>
+                    <option value="HIIT">HIIT</option>
+                    <option value="Dancing">Dancing</option>
+                    <option value="Hiking">Hiking</option>
+                    <option value="Pilates">Pilates</option>
+                    <option value="Rowing">Rowing</option>
+                  </select>
                   <input
                     disabled={isSummarized || entry.loading}
                     type="text"
@@ -833,32 +836,31 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
             <div className="fa-col-body">
               {otherEntries.map((entry, idx) => (
                 <div key={entry.id} className="fa-entry">
-                  <input
-                    ref={el => { otherInputRefs.current[`${entry.id}-cat`] = el; }}
+                  <select
+                    ref={el => { otherInputRefs.current[`${entry.id}-cat`] = el as any; }}
                     disabled={isSummarized || entry.loading}
-                    type="text"
-                    placeholder="Category"
                     className="fa-entry-input fa-entry-input--cat"
                     value={entry.category}
                     onChange={(e) => {
                       handleOtherInput(idx, 'category', e.target.value);
-                      if (idx === otherEntries.length - 1 && e.target.value.trim() && otherEntries[idx].category === '') {
+                      if (idx === otherEntries.length - 1 && e.target.value && otherEntries[idx].category === '') {
                         const newId = generateId();
                         setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
                       }
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isSummarized) {
-                        e.preventDefault();
-                        const newId = generateId();
-                        setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
-                        setTimeout(() => {
-                          const newInput = otherInputRefs.current[`${newId}-cat`];
-                          if (newInput) newInput.focus();
-                        }, 50);
-                      }
-                    }}
-                  />
+                  >
+                    <option value="" disabled>Category</option>
+                    <option value="Sleep">Sleep</option>
+                    <option value="Stress">Stress</option>
+                    <option value="Mood">Mood</option>
+                    <option value="Hydration">Hydration</option>
+                    <option value="Meditation">Meditation</option>
+                    <option value="Screen Time">Screen Time</option>
+                    <option value="Caffeine">Caffeine</option>
+                    <option value="Alcohol">Alcohol</option>
+                    <option value="Supplements">Supplements</option>
+                    <option value="Weight">Weight</option>
+                  </select>
                   <input
                     disabled={isSummarized || entry.loading}
                     type="text"
@@ -893,11 +895,41 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
         </div>
 
         {/* Action Button */}
-        <div className="fa-action-area">
+        <div className="fa-action-area" style={{ flexDirection: 'column', gap: '1rem' }}>
           {isSummarized ? (
-            <button className="fa-unlock-btn" onClick={toggleSummarize}>
-              <Unlock size={18} /> Unlock Entries
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', width: '100%', justifyContent: 'center' }}>
+                <button className="fa-unlock-btn" onClick={toggleSummarize}>
+                <Unlock size={18} /> Unlock Entries
+                </button>
+                
+                {recommendation && (
+                    <PDFDownloadLink
+                        document={
+                            <PdfReport 
+                                userStats={stats}
+                                metrics={metrics}
+                                gainEntries={gainEntries}
+                                lostEntries={lostEntries}
+                                recommendation={recommendation}
+                                date={new Date().toLocaleDateString()}
+                            />
+                        }
+                        fileName={`FitTrack_Report_${new Date().toISOString().split('T')[0]}.pdf`}
+                        style={{ textDecoration: 'none' }}
+                    >
+                        {({ blob, url, loading, error }) => (
+                            <button 
+                                className="fa-unlock-btn" 
+                                disabled={loading}
+                                style={{ background: '#ef4444', color: '#ffffff', border: 'none' }}
+                            >
+                                <Download size={18} />
+                                {loading ? 'Preparing...' : 'Download Report'}
+                            </button>
+                        )}
+                    </PDFDownloadLink>
+                )}
+            </div>
           ) : (
             <button className="fa-summarize-btn" onClick={toggleSummarize}>
               Summarize Day

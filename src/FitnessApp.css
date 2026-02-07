@@ -684,6 +684,17 @@
 .fa-entry-input::placeholder {
   color: rgba(255,255,255,0.12);
 }
+
+select.fa-entry-input {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+select.fa-entry-input option {
+  background: #0f0f0f;
+  color: #f0f0f0;
+}
+
 .fa-entry-input--sm {
   flex: none;
   width: 3.5rem;
