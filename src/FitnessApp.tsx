@@ -26,18 +26,78 @@ interface OtherEntry extends BaseEntry {
   response: string | null;
 }
 
-const FitnessApp: React.FC = () => {
+type UnitSystem = "metric" | "imperial";
+
+interface UserData {
+  name: string;
+  age: string;
+  sex: string;
+  heightCm: string;
+  heightFt: string;
+  heightIn: string;
+  weight: string;
+  targetweight: string;
+  activityLevel: string;
+  fitnessGoal: string;
+  workoutFrequency: string;
+  experienceLevel: string;
+}
+
+interface FitnessAppProps {
+  userData?: UserData & { units: UnitSystem };
+}
+
+const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
   // --- General Stats State ---
   const [isSummarized, setIsSummarized] = useState(false);
   const [editingBio, setEditingBio] = useState(false); // Toggle for bio editing
+  const [units, setUnits] = useState<UnitSystem>(userData?.units || 'metric');
   
-  const [stats, setStats] = useState({
-    name: 'John Doe',
-    age: '28',
-    gender: 'male',
-    weight: '82',
-    height: '180',
-  });
+  // Convert userData to stats format
+  const getInitialStats = () => {
+    if (!userData) {
+      return {
+        name: 'John Doe',
+        age: '28',
+        gender: 'male',
+        weight: '82',
+        height: '180',
+        targetWeight: '75',
+        activityLevel: 'moderate',
+        fitnessGoal: 'general',
+        workoutFrequency: '4',
+      };
+    }
+
+    // Calculate height in cm
+    let heightInCm = userData.heightCm;
+    if (userData.units === 'imperial' && userData.heightFt && userData.heightIn) {
+      const totalInches = (parseFloat(userData.heightFt) * 12) + parseFloat(userData.heightIn);
+      heightInCm = (totalInches * 2.54).toFixed(0);
+    }
+
+    // Convert weight to kg if needed
+    let weightInKg = userData.weight;
+    let targetWeightInKg = userData.targetweight;
+    if (userData.units === 'imperial') {
+      if (userData.weight) weightInKg = (parseFloat(userData.weight) * 0.453592).toFixed(1);
+      if (userData.targetweight) targetWeightInKg = (parseFloat(userData.targetweight) * 0.453592).toFixed(1);
+    }
+
+    return {
+      name: userData.name || 'User',
+      age: userData.age || '28',
+      gender: userData.sex || 'male',
+      weight: weightInKg || '82',
+      height: heightInCm || '180',
+      targetWeight: targetWeightInKg || '75',
+      activityLevel: userData.activityLevel || 'moderate',
+      fitnessGoal: userData.fitnessGoal || 'general',
+      workoutFrequency: userData.workoutFrequency || '4',
+    };
+  };
+
+  const [stats, setStats] = useState(getInitialStats());
   const [metrics, setMetrics] = useState({ bmi: '', bmr: '' });
 
   // --- Columns State ---
@@ -292,7 +352,14 @@ const FitnessApp: React.FC = () => {
         
         {/* --- Biometrics Bar (Output Only / Dashboard Style) --- */}
         <section className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] rounded-md border border-white/[0.06] p-6 relative shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 flex gap-2 items-center">
+                {/* Unit Toggle */}
+                <button
+                    onClick={() => setUnits(u => u === 'metric' ? 'imperial' : 'metric')}
+                    className="text-xs px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-white/[0.5] hover:text-white hover:border-[#ef4444] transition-all duration-300 font-medium"
+                >
+                    {units === 'metric' ? '🌍 Metric' : '🇺🇸 Imperial'}
+                </button>
                 <button 
                     onClick={() => setEditingBio(!editingBio)}
                     className="text-white/[0.25] hover:text-white transition-colors duration-300"
@@ -336,19 +403,29 @@ const FitnessApp: React.FC = () => {
                         )}
                     </div>
                     <div className="text-center">
-                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Weight (kg)</div>
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Weight</div>
                         {editingBio ? (
                             <input type="number" className="bg-white/[0.04] text-[#f0f0f0] text-center rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-16 transition-all duration-250" value={stats.weight} onChange={e => setStats({...stats, weight: e.target.value})} />
                         ) : (
-                            <div className="text-xl font-medium text-white">{stats.weight} <span className="text-xs text-white/[0.3]">kg</span></div>
+                            <div className="text-xl font-medium text-white">{units === 'metric' ? stats.weight : (parseFloat(stats.weight) * 2.20462).toFixed(1)} <span className="text-xs text-white/[0.3]">{units === 'metric' ? 'kg' : 'lbs'}</span></div>
                         )}
                     </div>
                     <div className="text-center">
-                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Height (cm)</div>
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Height</div>
                         {editingBio ? (
                             <input type="number" className="bg-white/[0.04] text-[#f0f0f0] text-center rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-16 transition-all duration-250" value={stats.height} onChange={e => setStats({...stats, height: e.target.value})} />
                         ) : (
-                            <div className="text-xl font-medium text-white">{stats.height} <span className="text-xs text-white/[0.3]">cm</span></div>
+                            <div className="text-xl font-medium text-white">
+                                {units === 'metric' 
+                                    ? `${stats.height} cm`
+                                    : (() => {
+                                        const totalInches = parseFloat(stats.height) / 2.54;
+                                        const feet = Math.floor(totalInches / 12);
+                                        const inches = Math.round(totalInches % 12);
+                                        return `${feet}'${inches}"`;
+                                    })()
+                                }
+                            </div>
                         )}
                     </div>
                 </div>
@@ -367,6 +444,42 @@ const FitnessApp: React.FC = () => {
                         <div className="text-2xl font-bold text-white">{metrics.bmr} <span className="text-xs text-white/[0.3] font-normal">kcal</span></div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        {/* --- New Fitness Profile Section --- */}
+        <section className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] rounded-md border border-white/[0.06] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] mt-6">
+            <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] mb-4 flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <Activity size={16} className="text-[#ef4444]" /> 
+                Fitness Profile
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
+                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Activity Level</div>
+                    <div className="text-lg font-medium text-white capitalize">
+                        {stats.activityLevel.replace('-', ' ')}
+                    </div>
+                </div>
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
+                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Primary Goal</div>
+                    <div className="text-lg font-medium text-white capitalize">
+                        {stats.fitnessGoal.replace('-', ' ')}
+                    </div>
+                </div>
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
+                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Workouts / Week</div>
+                    <div className="text-lg font-medium text-white">
+                        {stats.workoutFrequency} {parseInt(stats.workoutFrequency) === 1 ? 'day' : 'days'}
+                    </div>
+                </div>
+                {stats.targetWeight && (
+                    <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Target Weight</div>
+                        <div className="text-lg font-medium text-white">
+                            {units === 'metric' ? stats.targetWeight : (parseFloat(stats.targetWeight) * 2.20462).toFixed(1)} <span className="text-xs text-white/[0.3]">{units === 'metric' ? 'kg' : 'lbs'}</span>
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
 
