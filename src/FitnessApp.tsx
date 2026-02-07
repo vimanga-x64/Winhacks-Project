@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User } from 'lucide-react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User } from 'lucide-react';
 
 // --- Types ---
 interface BaseEntry {
@@ -51,6 +51,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
   // --- General Stats State ---
   const [isSummarized, setIsSummarized] = useState(false);
   const [editingBio, setEditingBio] = useState(false); // Toggle for bio editing
+  const [showBreakdown, setShowBreakdown] = useState(false); // Toggle for calorie breakdown
   const [units, setUnits] = useState<UnitSystem>(userData?.units || 'metric');
   
   // Convert userData to stats format
@@ -98,7 +99,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
   };
 
   const [stats, setStats] = useState(getInitialStats());
-  const [metrics, setMetrics] = useState({ bmi: '', bmr: '' });
+  const [metrics, setMetrics] = useState({ bmi: '', bmr: '', tdee: '', calorieGoal: '' });
 
   // --- Columns State ---
   const [gainEntries, setGainEntries] = useState<GainEntry[]>([
@@ -128,7 +129,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
     const a = parseFloat(stats.age);
 
     if (!w || !h) {
-      setMetrics({ bmi: '--', bmr: '--' });
+      setMetrics({ bmi: '--', bmr: '--', tdee: '--', calorieGoal: '--' });
       return;
     }
 
@@ -144,9 +145,42 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
       bmrVal = 10 * w + 6.25 * h - 5 * a - 161;
     }
 
+    // Activity multipliers for TDEE
+    const activityMultipliers: { [key: string]: number } = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      extreme: 1.9,
+    };
+
+    const activityMultiplier = activityMultipliers[stats.activityLevel] || 1.2;
+    const tdeeVal = bmrVal * activityMultiplier;
+
+    // Calculate calorie goal based on fitness goal
+    let calorieGoalVal = tdeeVal;
+    const goal = stats.fitnessGoal;
+    
+    if (goal === 'lose-fat') {
+      calorieGoalVal = tdeeVal - 750; // Aggressive deficit (~1.5 lbs/week)
+    } else if (goal === 'lose-fat-gradual') {
+      calorieGoalVal = tdeeVal - 500; // Moderate deficit (~1 lb/week)
+    } else if (goal === 'lose fat moderately') {
+      calorieGoalVal = tdeeVal - 250; // Gradual deficit (~0.5 lb/week)
+    } else if (goal === 'build-muscle') {
+      calorieGoalVal = tdeeVal + 300; // Surplus for muscle gain
+    } else if (goal === 'maintain') {
+      calorieGoalVal = tdeeVal; // Maintenance
+    } else {
+      // For endurance, flexibility, general fitness - slight deficit or maintenance
+      calorieGoalVal = tdeeVal - 100;
+    }
+
     setMetrics({
       bmi: bmiVal,
       bmr: bmrVal > 0 ? bmrVal.toFixed(0) : '--',
+      tdee: tdeeVal > 0 ? tdeeVal.toFixed(0) : '--',
+      calorieGoal: calorieGoalVal > 0 ? calorieGoalVal.toFixed(0) : '--',
     });
   }, [stats]);
 
@@ -444,42 +478,156 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData }) => {
                         <div className="text-2xl font-bold text-white">{metrics.bmr} <span className="text-xs text-white/[0.3] font-normal">kcal</span></div>
                     </div>
                 </div>
+
+                {/* Divider */}
+                <div className="hidden md:block w-px h-12 bg-white/[0.06]"></div>
+
+                {/* Fitness Profile Stats */}
+                <div className="flex gap-8">
+                    <div className="text-center">
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Activity</div>
+                        <div className="text-lg font-medium text-white capitalize">{stats.activityLevel}</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Goal</div>
+                        <div className="text-lg font-medium text-white capitalize">{stats.fitnessGoal.replace('-', ' ')}</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Workouts</div>
+                        <div className="text-lg font-medium text-white">{stats.workoutFrequency}/wk</div>
+                    </div>
+                    {stats.targetWeight && (
+                        <div className="text-center">
+                            <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Target</div>
+                            <div className="text-lg font-medium text-white">
+                                {units === 'metric' ? stats.targetWeight : (parseFloat(stats.targetWeight) * 2.20462).toFixed(1)} <span className="text-xs text-white/[0.3]">{units === 'metric' ? 'kg' : 'lbs'}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </section>
 
-        {/* --- New Fitness Profile Section --- */}
-        <section className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] rounded-md border border-white/[0.06] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)] mt-6">
-            <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] mb-4 flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
-                <Activity size={16} className="text-[#ef4444]" /> 
-                Fitness Profile
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
-                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Activity Level</div>
-                    <div className="text-lg font-medium text-white capitalize">
-                        {stats.activityLevel.replace('-', ' ')}
+        {/* --- Calorie Goals Section --- */}
+        <section className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] rounded-md border border-white/[0.06] shadow-[0_30px_80px_rgba(0,0,0,0.45)] mt-6">
+            <div className="flex flex-col md:flex-row">
+                {/* Left side: User's Selected Goal */}
+                <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-white/[0.06]">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                            <Flame size={16} className="text-[#ef4444]" /> 
+                            Your Calorie Strategy
+                        </h3>
+                        <button
+                            onClick={() => setShowBreakdown(!showBreakdown)}
+                            className="text-xs px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-white/[0.5] hover:text-white hover:border-[#ef4444] transition-all duration-300 font-medium"
+                        >
+                            {showBreakdown ? '✕ Hide' : '📊 Show'} Breakdown
+                        </button>
                     </div>
+                    
+                    {(() => {
+                        const goalData: { [key: string]: { label: string; deficit: number; description: string } } = {
+                            'lose-fat': { label: 'Lose Fat Aggressively', deficit: -750, description: 'Target weight loss of ~1.5 lbs/week with a significant caloric deficit' },
+                            'lose-fat-gradual': { label: 'Lose Fat Moderately', deficit: -500, description: 'Target weight loss of ~1 lb/week with a moderate deficit' },
+                            'lose fat moderately': { label: 'Lose Fat Gradually', deficit: -250, description: 'Target weight loss of ~0.5 lbs/week with a gradual approach' },
+                            'maintain': { label: 'Maintain Weight', deficit: 0, description: 'Maintain current weight with balanced calorie intake' },
+                            'build-muscle': { label: 'Build Muscle', deficit: 300, description: 'Caloric surplus to support muscle growth and strength gains' },
+                            'endurance': { label: 'Improve Endurance', deficit: -100, description: 'Slight deficit while maintaining energy for cardio performance' },
+                            'flexibility': { label: 'Increase Flexibility', deficit: -100, description: 'Balanced approach focused on recovery and mobility' },
+                            'general': { label: 'General Fitness', deficit: -100, description: 'Overall health and wellness with slight optimization' },
+                        };
+
+                        const currentGoal = goalData[stats.fitnessGoal] || goalData['general'];
+                        const tdee = parseFloat(metrics.tdee) || 0;
+                        const goalCalories = tdee + currentGoal.deficit;
+                        const weeklyChange = (currentGoal.deficit * 7) / 3500;
+
+                        return (
+                            <div className="space-y-4">
+                                {/* Collapsible Calculation Breakdown at the top */}
+                                {showBreakdown && (
+                                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-4 animate-[fadeIn_0.3s_ease-in-out]">
+                                        <div className="text-xs text-white/[0.4] uppercase tracking-wider mb-3">Calculation Breakdown</div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-white/[0.5]">Base Metabolic Rate (BMR)</span>
+                                                <span className="text-white font-medium">{metrics.bmr} kcal</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-white/[0.5]">Activity Multiplier</span>
+                                                <span className="text-white font-medium capitalize">{stats.activityLevel}</span>
+                                            </div>
+                                            <div className="h-px bg-white/[0.06] my-2"></div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-white/[0.6] font-medium">TDEE (Maintenance)</span>
+                                                <span className="text-white font-bold">{metrics.tdee} kcal</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-white/[0.6] font-medium">Goal Adjustment</span>
+                                                <span className={`font-bold ${
+                                                    currentGoal.deficit > 0 ? 'text-blue-400' : currentGoal.deficit < 0 ? 'text-orange-400' : 'text-green-400'
+                                                }`}>
+                                                    {currentGoal.deficit > 0 ? '+' : ''}{currentGoal.deficit} kcal
+                                                </span>
+                                            </div>
+                                            <div className="h-px bg-white/[0.06] my-2"></div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[#ef4444] font-bold uppercase text-xs tracking-wider">Daily Target</span>
+                                                <span className="text-[#ef4444] font-bold text-lg">{goalCalories.toFixed(0)} kcal</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Goal Card */}
+                                <div className="bg-gradient-to-br from-[#ef4444]/10 to-transparent border-2 border-[#ef4444] rounded-lg p-6 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div>
+                                            <div className="text-xs text-white/[0.4] uppercase tracking-wider mb-1">Current Goal</div>
+                                            <h4 className="text-2xl font-bold text-white mb-2">{currentGoal.label}</h4>
+                                        </div>
+                                        <div className="w-3 h-3 rounded-full bg-[#ef4444] animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                                    </div>
+                                    <p className="text-sm text-white/[0.6] mb-4 leading-relaxed">{currentGoal.description}</p>
+                                    
+                                    {/* Strategy Details */}
+                                    <div className="grid grid-cols-2 gap-3 mt-4">
+                                        <div className="bg-white/[0.04] border border-white/[0.08] rounded p-3">
+                                            <div className="text-[0.65rem] text-white/[0.4] uppercase tracking-wider mb-1">Daily Adjustment</div>
+                                            <div className={`text-lg font-bold ${
+                                                currentGoal.deficit > 0 
+                                                    ? 'text-blue-400' 
+                                                    : currentGoal.deficit < 0 
+                                                    ? 'text-orange-400' 
+                                                    : 'text-green-400'
+                                            }`}>
+                                                {currentGoal.deficit > 0 ? '+' : ''}{currentGoal.deficit} kcal
+                                            </div>
+                                        </div>
+                                        <div className="bg-white/[0.04] border border-white/[0.08] rounded p-3">
+                                            <div className="text-[0.65rem] text-white/[0.4] uppercase tracking-wider mb-1">Weekly Change</div>
+                                            <div className="text-lg font-bold text-white">
+                                                {weeklyChange > 0 ? '+' : ''}{weeklyChange.toFixed(2)} lbs
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
-                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
-                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Primary Goal</div>
-                    <div className="text-lg font-medium text-white capitalize">
-                        {stats.fitnessGoal.replace('-', ' ')}
-                    </div>
-                </div>
-                <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
-                    <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Workouts / Week</div>
-                    <div className="text-lg font-medium text-white">
-                        {stats.workoutFrequency} {parseInt(stats.workoutFrequency) === 1 ? 'day' : 'days'}
-                    </div>
-                </div>
-                {stats.targetWeight && (
-                    <div className="bg-white/[0.04] border border-white/[0.08] rounded p-4">
-                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Target Weight</div>
-                        <div className="text-lg font-medium text-white">
-                            {units === 'metric' ? stats.targetWeight : (parseFloat(stats.targetWeight) * 2.20462).toFixed(1)} <span className="text-xs text-white/[0.3]">{units === 'metric' ? 'kg' : 'lbs'}</span>
+
+                {/* Right side: Your Calorie Goal */}
+                <div className="w-full md:w-80 p-6 flex flex-col justify-center items-center bg-gradient-to-br from-white/[0.03] to-transparent">
+                    <div className="text-center">
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-2">Your Daily Target</div>
+                        <div className="text-5xl font-bold text-[#ef4444] mb-2 tracking-tight">
+                            {metrics.calorieGoal}
                         </div>
+                        <div className="text-sm text-white/[0.5]">calories per day</div>
                     </div>
-                )}
+                </div>
             </div>
         </section>
 
