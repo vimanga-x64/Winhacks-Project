@@ -1,10 +1,15 @@
-import FitnessApp from './FitnessApp';
-import './App.css';
+import { useState } from "react";
+import LandingPage from "./components/LandingPage";
+import FitnessApp from "./FitnessApp";
 
 function App() {
-  return (
-    <FitnessApp />
-  );
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  if (showDashboard) {
+    return <FitnessApp />;
+  }
+
+  return <LandingPage onComplete={() => setShowDashboard(true)} />;
 }
 
 export default App;

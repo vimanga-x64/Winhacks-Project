@@ -249,30 +249,55 @@ const FitnessApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-300 font-sans selection:bg-red-900 selection:text-white pb-64">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#f0f0f0] font-sans selection:bg-red-900 selection:text-white pb-64 relative overflow-hidden">
+      
+      {/* Abstract Background - matching landing page */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Grain texture */}
+        <div className="absolute inset-0 opacity-50" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`
+        }}></div>
+        
+        {/* Gradient overlays */}
+        <div className="absolute inset-0" style={{
+          background: `
+            radial-gradient(ellipse 80% 60% at 20% 80%, rgba(220,38,38,0.08) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 50% at 80% 20%, rgba(249,115,22,0.06) 0%, transparent 70%),
+            radial-gradient(ellipse 90% 70% at 50% 50%, rgba(15,15,15,1) 0%, transparent 100%)`
+        }}></div>
+        
+        {/* Vertical lines */}
+        <div className="absolute w-px h-full left-[20%] top-0 bg-white/[0.02]"></div>
+        <div className="absolute w-px h-full left-[50%] top-0 bg-white/[0.02]"></div>
+        <div className="absolute w-px h-full left-[80%] top-0 bg-white/[0.02]"></div>
+        
+        {/* Floating circles */}
+        <div className="absolute w-[600px] h-[600px] top-[-180px] right-[-120px] rounded-full border border-white/[0.03]"></div>
+        <div className="absolute w-[400px] h-[400px] bottom-[-100px] left-[-80px] rounded-full border border-white/[0.03]"></div>
+      </div>
       
       {/* --- Header --- */}
-      <header className="border-b border-neutral-900 bg-neutral-950 sticky top-0 z-20">
+      <header className="border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-sm sticky top-0 z-20 relative">
         <div className="w-[90%] mx-auto py-5 flex justify-between items-center">
             <div className="flex items-center gap-3">
-                <Flame className="text-red-600 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]" size={32} />
-                <h1 className="text-3xl font-black tracking-tighter text-white italic">
-                    BURN<span className="text-red-600">TRACK</span>
+                <Flame className="text-[#ef4444] drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]" size={32} />
+                <h1 className="text-3xl font-black tracking-[0.06em] text-white uppercase" style={{ fontFamily: '"Bebas Neue", "Oswald", sans-serif' }}>
+                    FIT<span className="text-[#ef4444]">TRACK</span>
                 </h1>
             </div>
         </div>
       </header>
 
-      <main className="w-[90%] mx-auto py-10 space-y-10">
+      <main className="w-[90%] mx-auto py-10 space-y-10 relative z-1">
         
         {/* --- Biometrics Bar (Output Only / Dashboard Style) --- */}
-        <section className="bg-neutral-900/40 rounded-2xl border border-neutral-800/60 p-6 relative">
+        <section className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] rounded-md border border-white/[0.06] p-6 relative shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
             <div className="absolute top-4 right-4">
                 <button 
                     onClick={() => setEditingBio(!editingBio)}
-                    className="text-neutral-600 hover:text-white transition-colors"
+                    className="text-white/[0.25] hover:text-white transition-colors duration-300"
                 >
-                    {editingBio ? <Check size={18} className="text-green-500" /> : <Edit2 size={16} />}
+                    {editingBio ? <Check size={18} className="text-[#ef4444]" /> : <Edit2 size={16} />}
                 </button>
             </div>
 
@@ -280,14 +305,14 @@ const FitnessApp: React.FC = () => {
                 
                 {/* User Info */}
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 border border-neutral-700">
+                    <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center text-white/[0.35] border border-white/[0.08]">
                         <User size={24} />
                     </div>
                     <div>
-                        <div className="text-xs text-neutral-500 font-bold uppercase tracking-widest mb-1">Athlete</div>
+                        <div className="text-[0.72rem] text-[#ef4444] font-medium uppercase tracking-[0.18em] mb-1">Athlete</div>
                         {editingBio ? (
                             <input 
-                                className="bg-neutral-800 text-white px-2 py-1 rounded border border-neutral-700 focus:border-red-500 outline-none w-32"
+                                className="bg-white/[0.04] text-[#f0f0f0] px-2 py-1 rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-32 transition-all duration-250"
                                 value={stats.name} 
                                 onChange={e => setStats({...stats, name: e.target.value})} 
                             />
@@ -298,48 +323,48 @@ const FitnessApp: React.FC = () => {
                 </div>
 
                 {/* Divider */}
-                <div className="hidden md:block w-px h-12 bg-neutral-800"></div>
+                <div className="hidden md:block w-px h-12 bg-white/[0.06]"></div>
 
                 {/* Metrics Grid */}
                 <div className="flex gap-12">
                     <div className="text-center">
-                        <div className="text-[10px] text-neutral-500 font-black uppercase mb-1">Age</div>
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Age</div>
                         {editingBio ? (
-                            <input type="number" className="bg-neutral-800 text-white text-center rounded border border-neutral-700 w-16" value={stats.age} onChange={e => setStats({...stats, age: e.target.value})} />
+                            <input type="number" className="bg-white/[0.04] text-[#f0f0f0] text-center rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-16 transition-all duration-250" value={stats.age} onChange={e => setStats({...stats, age: e.target.value})} />
                         ) : (
                             <div className="text-xl font-medium text-white">{stats.age}</div>
                         )}
                     </div>
                     <div className="text-center">
-                        <div className="text-[10px] text-neutral-500 font-black uppercase mb-1">Weight (kg)</div>
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Weight (kg)</div>
                         {editingBio ? (
-                            <input type="number" className="bg-neutral-800 text-white text-center rounded border border-neutral-700 w-16" value={stats.weight} onChange={e => setStats({...stats, weight: e.target.value})} />
+                            <input type="number" className="bg-white/[0.04] text-[#f0f0f0] text-center rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-16 transition-all duration-250" value={stats.weight} onChange={e => setStats({...stats, weight: e.target.value})} />
                         ) : (
-                            <div className="text-xl font-medium text-white">{stats.weight} <span className="text-xs text-neutral-600">kg</span></div>
+                            <div className="text-xl font-medium text-white">{stats.weight} <span className="text-xs text-white/[0.3]">kg</span></div>
                         )}
                     </div>
                     <div className="text-center">
-                        <div className="text-[10px] text-neutral-500 font-black uppercase mb-1">Height (cm)</div>
+                        <div className="text-[0.72rem] text-white/[0.35] font-bold uppercase tracking-[0.08em] mb-1">Height (cm)</div>
                         {editingBio ? (
-                            <input type="number" className="bg-neutral-800 text-white text-center rounded border border-neutral-700 w-16" value={stats.height} onChange={e => setStats({...stats, height: e.target.value})} />
+                            <input type="number" className="bg-white/[0.04] text-[#f0f0f0] text-center rounded border border-white/[0.08] focus:border-[#ef4444] focus:shadow-[0_0_0_2px_rgba(239,68,68,0.12)] outline-none w-16 transition-all duration-250" value={stats.height} onChange={e => setStats({...stats, height: e.target.value})} />
                         ) : (
-                            <div className="text-xl font-medium text-white">{stats.height} <span className="text-xs text-neutral-600">cm</span></div>
+                            <div className="text-xl font-medium text-white">{stats.height} <span className="text-xs text-white/[0.3]">cm</span></div>
                         )}
                     </div>
                 </div>
 
                 {/* Divider */}
-                <div className="hidden md:block w-px h-12 bg-neutral-800"></div>
+                <div className="hidden md:block w-px h-12 bg-white/[0.06]"></div>
 
                 {/* Calculated Stats */}
                 <div className="flex gap-8">
                      <div className="text-center">
-                        <div className="text-[10px] text-red-500/80 font-black uppercase mb-1">BMI</div>
+                        <div className="text-[0.72rem] text-[#ef4444] font-bold uppercase tracking-[0.08em] mb-1">BMI</div>
                         <div className="text-2xl font-bold text-white">{metrics.bmi}</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-[10px] text-red-500/80 font-black uppercase mb-1">BMR</div>
-                        <div className="text-2xl font-bold text-white">{metrics.bmr} <span className="text-xs text-neutral-600 font-normal">kcal</span></div>
+                        <div className="text-[0.72rem] text-[#ef4444] font-bold uppercase tracking-[0.08em] mb-1">BMR</div>
+                        <div className="text-2xl font-bold text-white">{metrics.bmr} <span className="text-xs text-white/[0.3] font-normal">kcal</span></div>
                     </div>
                 </div>
             </div>
@@ -349,25 +374,25 @@ const FitnessApp: React.FC = () => {
         <div className="flex justify-between gap-8 w-[99%] mx-auto min-h-[600px] mt-8">
     
     {/* 1. Gain Calories */}
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl flex flex-col w-[30%] min-h-[600px]">
-        <div className="p-5 border-b border-neutral-800 bg-neutral-900 flex justify-between items-center">
-            <h3 className="font-bold text-white uppercase tracking-wider text-sm flex items-center gap-2">
-                <Utensils size={16} className="text-emerald-500" /> 
+    <div className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] border border-white/[0.06] rounded-md overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.45)] flex flex-col w-[30%] min-h-[600px]">
+        <div className="p-5 border-b border-white/[0.06] bg-[rgba(14,14,14,0.95)] flex justify-between items-center">
+            <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <Utensils size={16} className="text-[#22c55e]" /> 
                 Gain Calories
             </h3>
         </div>
         
         <div className="p-4 space-y-3 flex-1 overflow-y-auto">
             {gainEntries.map((entry, idx) => (
-                <div key={entry.id} className="group relative bg-neutral-950/50 text-white border border-neutral-800/50 p-3 rounded-lg hover:border-neutral-700 transition-colors">
+                <div key={entry.id} className="group relative bg-white/[0.04] text-[#f0f0f0] border border-white/[0.08] p-3 rounded hover:border-white/[0.12] transition-all duration-300">
                     {/* FLEX ROW: Items aligned center */}
                     <div className="flex items-center gap-3 w-full">
                         
                         {/* 1. Meal Select (Fixed Width) */}
                         <select 
                             disabled={isSummarized}
-                            className="w-24 bg-transparent text-[10px] font-bold !text-white uppercase focus:text-emerald-400 outline-none cursor-pointer tracking-wide border-r border-neutral-800 mr-2"
-                            style={{ color: 'white' }}
+                            className="w-24 bg-transparent text-[0.72rem] font-medium !text-[#f0f0f0] uppercase focus:text-[#22c55e] outline-none cursor-pointer tracking-[0.08em] border-r border-white/[0.08] mr-2 transition-colors duration-300"
+                            style={{ color: '#f0f0f0' }}
                             value={entry.meal}
                             onChange={(e) => {
                                 const newE = [...gainEntries];
@@ -375,7 +400,7 @@ const FitnessApp: React.FC = () => {
                                 setGainEntries(newE);
                             }}
                         >
-                            {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(m => <option key={m} value={m} className="bg-neutral-900 !text-white" style={{ color: 'white', backgroundColor: '#171717' }}>{m}</option>)}
+                            {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(m => <option key={m} value={m} className="bg-[#0e0e0e] !text-[#f0f0f0]" style={{ color: '#f0f0f0', backgroundColor: '#0e0e0e' }}>{m}</option>)}
                         </select>
 
                         {/* 2. Food Input (Takes remaining space) */}
@@ -384,8 +409,8 @@ const FitnessApp: React.FC = () => {
                             disabled={isSummarized || entry.loading}
                             type="text"
                             placeholder="e.g. 2 eggs..."
-                            className="flex-1 min-w-0 bg-transparent text-sm !text-white placeholder:text-neutral-600 focus:outline-none"
-                            style={{ color: 'white' }}
+                            className="flex-1 min-w-0 bg-transparent text-[0.9rem] !text-[#f0f0f0] placeholder:text-white/[0.15] focus:outline-none"
+                            style={{ color: '#f0f0f0' }}
                             value={entry.input}
                             onChange={(e) => {
                                 handleGainInput(idx, e.target.value);
@@ -400,9 +425,9 @@ const FitnessApp: React.FC = () => {
                         {/* 3. Calories (Fixed Width aligned end) */}
                         <div className="min-w-[50px] text-right">
                             {entry.loading ? (
-                                <span className="text-xs text-emerald-500/60 italic">Thinking...</span>
+                                <span className="text-xs text-[#22c55e]/60 italic">Thinking...</span>
                             ) : entry.calories ? (
-                                <span className="text-sm font-bold text-emerald-400">
+                                <span className="text-sm font-bold text-[#22c55e]">
                                     +{entry.calories}
                                 </span>
                             ) : null}
@@ -414,17 +439,17 @@ const FitnessApp: React.FC = () => {
     </div>
 
     {/* 2. Calories Lost */}
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl flex flex-col w-[30%] min-h-[600px]">
-        <div className="p-5 border-b border-neutral-800 bg-neutral-900 flex justify-between items-center">
-            <h3 className="font-bold text-white uppercase tracking-wider text-sm flex items-center gap-2">
-                <Flame size={16} className="text-red-500" /> 
+    <div className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] border border-white/[0.06] rounded-md overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.45)] flex flex-col w-[30%] min-h-[600px]">
+        <div className="p-5 border-b border-white/[0.06] bg-[rgba(14,14,14,0.95)] flex justify-between items-center">
+            <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <Flame size={16} className="text-[#ef4444]" /> 
                 Calories Lost
             </h3>
         </div>
 
         <div className="p-4 space-y-3 flex-1 overflow-y-auto">
             {lostEntries.map((entry, idx) => (
-                <div key={entry.id} className="group bg-neutral-950/50 border border-neutral-800/50 p-3 rounded-lg hover:border-neutral-700 transition-colors">
+                <div key={entry.id} className="group bg-white/[0.04] border border-white/[0.08] p-3 rounded hover:border-white/[0.12] transition-all duration-300">
                     {/* FLEX ROW */}
                     <div className="flex items-center gap-3 w-full">
                         
@@ -434,8 +459,8 @@ const FitnessApp: React.FC = () => {
                             disabled={isSummarized || entry.loading}
                             type="text"
                             placeholder="Activity Name"
-                            className="flex-1 min-w-0 bg-transparent text-sm font-medium !text-white placeholder:text-neutral-600 focus:outline-none"
-                            style={{ color: 'white' }}
+                            className="flex-1 min-w-0 bg-transparent text-[0.9rem] font-medium !text-[#f0f0f0] placeholder:text-white/[0.15] focus:outline-none"
+                            style={{ color: '#f0f0f0' }}
                             value={entry.activity}
                             onChange={(e) => {
                                 handleLostInput(idx, 'activity', e.target.value);
@@ -448,13 +473,13 @@ const FitnessApp: React.FC = () => {
                         />
 
                         {/* 2. Duration (Fixed Width) */}
-                        <div className="w-16 border-l border-neutral-800 pl-2">
+                        <div className="w-16 border-l border-white/[0.08] pl-2">
                             <input
                                 disabled={isSummarized || entry.loading}
                                 type="text"
                                 placeholder="30m"
-                                className="w-full bg-transparent text-xs !text-white placeholder:text-neutral-600 focus:outline-none text-center"
-                                style={{ color: 'white' }}
+                                className="w-full bg-transparent text-xs !text-[#f0f0f0] placeholder:text-white/[0.15] focus:outline-none text-center"
+                                style={{ color: '#f0f0f0' }}
                                 value={entry.duration}
                                 onChange={(e) => {
                                     handleLostInput(idx, 'duration', e.target.value);
@@ -465,9 +490,9 @@ const FitnessApp: React.FC = () => {
                         {/* 3. Calories (Fixed Width aligned end) */}
                         <div className="min-w-[50px] text-right">
                             {entry.loading ? (
-                                <span className="text-xs text-red-500/60 italic">Thinking...</span>
+                                <span className="text-xs text-[#ef4444]/60 italic">Thinking...</span>
                             ) : entry.calories ? (
-                                <span className="text-sm font-bold text-red-400">
+                                <span className="text-sm font-bold text-[#ef4444]">
                                     -{entry.calories}
                                 </span>
                             ) : null}
@@ -479,17 +504,17 @@ const FitnessApp: React.FC = () => {
     </div>
 
     {/* 3. Other Metrics */}
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl flex flex-col w-[30%] min-h-[600px]">
-        <div className="p-5 border-b border-neutral-800 bg-neutral-900 flex justify-between items-center">
-            <h3 className="font-bold text-white uppercase tracking-wider text-sm flex items-center gap-2">
-                <HeartPulse size={16} className="text-purple-500" /> 
+    <div className="bg-[rgba(14,14,14,0.95)] backdrop-blur-[18px] border border-white/[0.06] rounded-md overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.45)] flex flex-col w-[30%] min-h-[600px]">
+        <div className="p-5 border-b border-white/[0.06] bg-[rgba(14,14,14,0.95)] flex justify-between items-center">
+            <h3 className="font-medium text-white uppercase tracking-[0.08em] text-[0.85rem] flex items-center gap-2" style={{ fontFamily: '"Oswald", sans-serif' }}>
+                <HeartPulse size={16} className="text-[#9333ea]" /> 
                 Other Metrics
             </h3>
         </div>
 
         <div className="p-4 space-y-3 flex-1 overflow-y-auto">
             {otherEntries.map((entry, idx) => (
-                <div key={entry.id} className="group bg-neutral-950/50 border border-neutral-800/50 p-3 rounded-lg hover:border-neutral-700 transition-colors">
+                <div key={entry.id} className="group bg-white/[0.04] border border-white/[0.08] p-3 rounded hover:border-white/[0.12] transition-all duration-300">
                      {/* FLEX ROW */}
                      <div className="flex items-center gap-3 w-full">
                         
@@ -499,8 +524,8 @@ const FitnessApp: React.FC = () => {
                             disabled={isSummarized || entry.loading}
                             type="text"
                             placeholder="CATEGORY"
-                            className="w-24 bg-transparent text-[10px] font-bold !text-white uppercase tracking-wide placeholder:text-neutral-700 focus:outline-none border-r border-neutral-800 mr-2"
-                            style={{ color: 'white' }}
+                            className="w-24 bg-transparent text-[0.72rem] font-medium !text-[#f0f0f0] uppercase tracking-[0.08em] placeholder:text-white/[0.15] focus:outline-none border-r border-white/[0.08] mr-2"
+                            style={{ color: '#f0f0f0' }}
                             value={entry.category}
                             onChange={(e) => {
                                 handleOtherInput(idx, 'category', e.target.value);
@@ -517,8 +542,8 @@ const FitnessApp: React.FC = () => {
                             disabled={isSummarized || entry.loading}
                             type="text"
                             placeholder="Value / Note"
-                            className="flex-1 min-w-0 bg-transparent text-sm !text-white placeholder:text-neutral-600 focus:outline-none"
-                            style={{ color: 'white' }}
+                            className="flex-1 min-w-0 bg-transparent text-[0.9rem] !text-[#f0f0f0] placeholder:text-white/[0.15] focus:outline-none"
+                            style={{ color: '#f0f0f0' }}
                             value={entry.input}
                             onChange={(e) => {
                                 handleOtherInput(idx, 'input', e.target.value);
@@ -528,9 +553,9 @@ const FitnessApp: React.FC = () => {
                         {/* 3. Status Indicator */}
                         <div className="min-w-[20px] flex justify-end">
                             {entry.loading ? (
-                                <span className="text-xs text-purple-500/60 italic">Thinking...</span>
+                                <span className="text-xs text-[#9333ea]/60 italic">Thinking...</span>
                             ) : entry.response ? (
-                               <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_purple]"></div>
+                               <div className="w-2 h-2 rounded-full bg-[#9333ea] shadow-[0_0_8px_#9333ea]"></div>
                             ) : null}
                         </div>
                     </div>
@@ -541,21 +566,25 @@ const FitnessApp: React.FC = () => {
 </div>
 
         {/* --- Action Button (Modified) --- */}
-<div className="text-white pt-16 mb-8 flex justify-center z-30 pointer-events-none">
+<div className="text-white pt-16 mb-8 flex justify-center z-30 pointer-events-none relative">
     <button 
         onClick={toggleSummarize}
-        className={`pointer-events-auto mt-12 transition-all transform duration-300 flex items-center justify-center rounded-full font-bold uppercase tracking-widest shadow-2xl ${
+        className={`pointer-events-auto mt-12 transition-all transform duration-300 flex items-center justify-center font-bold uppercase tracking-[0.1em] shadow-2xl relative overflow-hidden ${
             isSummarized 
-            ? 'bg-neutral-800 text-white hover:text-white border border-neutral-700 hover:bg-neutral-700 py-6 px-16 text-base gap-2' 
-            : 'bg-[linear-gradient(to_right,#dc2626,#f97316,#facc15,#22c55e,#3b82f6,#6366f1,#9333ea)] text-white border-4 border-white/20 py-12 px-48 text-[24px] shadow-[0_0_60px_rgba(255,255,255,0.3)] hover:shadow-[0_0_100px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95'
+            ? 'bg-transparent text-white/[0.4] border border-white/[0.08] hover:text-white hover:border-white/[0.2] py-[0.65rem] px-[1.6rem] text-[0.8rem] gap-2 rounded' 
+            : 'bg-[#ef4444] text-white py-[0.9rem] px-[2.4rem] text-[0.85rem] rounded shadow-[0_8px_30px_rgba(239,68,68,0.35)] hover:transform hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(239,68,68,0.45)]'
         }`}
+        style={{ fontFamily: '"Inter", sans-serif' }}
     >
         {isSummarized ? (
             <>
-                <Unlock size={32} /> Unlock
+                <Unlock size={20} /> Unlock
             </>
         ) : (
-            "SUMMARIZE"
+            <>
+                SUMMARIZE
+                <span className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.12] to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-500"></span>
+            </>
         )}
     </button>
 </div>
