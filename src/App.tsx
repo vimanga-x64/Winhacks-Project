@@ -29,7 +29,7 @@ function App() {
   };
 
   if (showDashboard && userData) {
-    return <FitnessApp userData={userData} />;
+    return <FitnessApp userData={userData} onBack={() => setShowDashboard(false)} />;
   }
 
   return <LandingPage onComplete={handleComplete} />;
