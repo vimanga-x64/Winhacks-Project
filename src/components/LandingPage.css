@@ -606,6 +606,10 @@
   background-position: right 0.9rem center;
   padding-right: 2.2rem;
 }
+.lp-field select option {
+  background: #0f0f0f;
+  color: #f0f0f0;
+}
 
 .lp-field-row {
   display: flex;
