@@ -89,7 +89,7 @@ The response must:
 
 The output must be:
 - A single well-structured text (5–7 sentences).
-- With bullet points.
+- With bullet points in new line. For bulltets, use "*" followed by a space.
 - No headings.
 - Natural, professional tone.
 RESPONSE FORMAT:
