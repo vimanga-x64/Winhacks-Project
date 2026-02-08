@@ -2,7 +2,7 @@
 
 FitTrack is a wellness and recovery assistant that brings activity tracking, nutrition insights, and progress reporting into a single, user-friendly experience. It is designed for students, employees, and anyone who wants a clear, actionable view of their health data.
 
-## Screenshots
+## Snapshots
 
 <img width="1919" height="938" alt="image" src="https://github.com/user-attachments/assets/2aaff91a-5181-4481-b556-b7ba06aae95a" />
 
