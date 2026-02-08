@@ -4,6 +4,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import '@google/model-viewer';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk';
 import avatarModelUrl from './assets/avatar_model/6987da136eb4878bb8625c33.glb';
 import talkAnim01 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_001.glb';
 import talkAnim02 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_002.glb';
@@ -112,71 +113,78 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
   const idleRafRef = useRef<number | null>(null);
   const idleActionRef = useRef<THREE.AnimationAction | null>(null);
 
-  // Preload TTS voices as early as possible
-  useEffect(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-    }
-  }, []);
+  // --- Azure TTS refs ---
+  const synthesizerRef = useRef<SpeechSDK.SpeechSynthesizer | null>(null);
+  const playerRef = useRef<SpeechSDK.SpeakerAudioDestination | null>(null);
 
   const API_BASE_URL = "http://localhost:8000";
-  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
-
-  const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const speakRecommendation = (text: string) => {
-    if (!('speechSynthesis' in window) || !text.trim()) return;
-    window.speechSynthesis.cancel();
+    if (!text.trim()) return;
 
-    // Clear any previous keep-alive timer
-    if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+    // Stop any current speech first
+    stopSpeaking();
 
-    // Minimal delay after cancel() to avoid Chrome dropping the utterance
-    setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
+    const speechKey = import.meta.env.VITE_AZURE_SPEECH_KEY;
+    const speechRegion = import.meta.env.VITE_AZURE_SPEECH_REGION;
+    if (!speechKey || !speechRegion) {
+      console.warn('[FitTrack] Azure Speech credentials missing');
+      return;
+    }
 
-      // Ensure voices are loaded
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        // Prefer an English voice
-        const englishVoice = voices.find(v => v.lang.startsWith('en'));
-        if (englishVoice) utterance.voice = englishVoice;
-      }
+    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(speechKey, speechRegion);
+    speechConfig.speechSynthesisVoiceName = 'en-US-GuyNeural';
 
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
-      };
-      utterance.onerror = (e) => {
-        console.warn('[FitTrack] TTS error:', e);
-        setIsSpeaking(false);
-        if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
-      };
+    const player = new SpeechSDK.SpeakerAudioDestination();
+    playerRef.current = player;
+    const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(player);
 
-      setIsSpeaking(true);
-      window.speechSynthesis.speak(utterance);
-      lastSpokenRef.current = text;
+    const synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig);
+    synthesizerRef.current = synthesizer;
 
-      // Chrome bug workaround: pause/resume every 10s to prevent cutoff
-      ttsKeepAliveRef.current = setInterval(() => {
-        if (!window.speechSynthesis.speaking) {
-          if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
-          return;
+    setIsSpeaking(true);
+    lastSpokenRef.current = text;
+
+    player.onAudioEnd = () => {
+      setIsSpeaking(false);
+      synthesizer.close();
+      synthesizerRef.current = null;
+      playerRef.current = null;
+    };
+
+    synthesizer.speakTextAsync(
+      text,
+      (result) => {
+        if (result.reason === SpeechSDK.ResultReason.Canceled) {
+          const cancellation = SpeechSDK.CancellationDetails.fromResult(result);
+          console.warn('[FitTrack] Azure TTS canceled:', cancellation.reason, cancellation.errorDetails);
+          setIsSpeaking(false);
+          synthesizer.close();
+          synthesizerRef.current = null;
+          playerRef.current = null;
         }
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }, 10000);
-    }, 30);
+      },
+      (err) => {
+        console.error('[FitTrack] Azure TTS error:', err);
+        setIsSpeaking(false);
+        synthesizer.close();
+        synthesizerRef.current = null;
+        playerRef.current = null;
+      }
+    );
   };
 
   const stopSpeaking = () => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+    if (playerRef.current) {
+      playerRef.current.pause();
+      playerRef.current.close();
+      playerRef.current = null;
+    }
+    if (synthesizerRef.current) {
+      synthesizerRef.current.close();
+      synthesizerRef.current = null;
+    }
     setIsSpeaking(false);
-    if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
   };
 
   // --- Discover scene, morph targets, and create AnimationMixer ---
@@ -909,7 +917,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                   <button
                     className="fa-pill-btn"
                     onClick={() => recommendation && speakRecommendation(recommendation)}
-                    disabled={!canSpeak || recommendationLoading || !recommendation}
+                    disabled={recommendationLoading || !recommendation}
                   >
                     <Volume2 size={14} /> Replay Audio
                   </button>

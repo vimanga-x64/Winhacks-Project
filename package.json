@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "firebase": "^12.9.0",
     "lucide-react": "^0.563.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.48.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.172.0"
