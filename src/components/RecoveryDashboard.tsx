@@ -19,6 +19,8 @@ import {
 } from 'recharts';
 import simulatedHealth from '../data/simulated_health.json';
 import simulatedFood from '../data/simulated_food.json';
+import { useAuth } from '../context/AuthContext';
+import { fetchGoogleFitHistory, type DailyFitData } from '../lib/googleFit';
 import '../FitnessApp.css';
 import './RecoveryDashboard.css';
 
@@ -205,18 +207,93 @@ const describeStress = (score: number) => {
 };
 
 const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfile }) => {
+  const { googleAccessToken } = useAuth();
   const [tips, setTips] = useState<Record<string, string[]> | null>(null);
   const [tipsLoading, setTipsLoading] = useState(false);
+  
+  // State for fetched Google Fit Data
+  const [fitData, setFitData] = useState<DailyFitData[] | null>(null);
+  const [fitLoading, setFitLoading] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
 
-  const healthDays = (simulatedHealth as { days: HealthDay[] }).days;
+  const syncData = () => {
+    if (googleAccessToken) {
+      setFitLoading(true);
+      fetchGoogleFitHistory(googleAccessToken)
+        .then(data => {
+          setFitData(data);
+          setFitLoading(false);
+          setLastSync(new Date());
+        })
+        .catch(err => {
+          console.error("Failed to fetch Google Fit data", err);
+          setFitLoading(false);
+        });
+    }
+  };
+
+  useEffect(() => {
+    syncData();
+  }, [googleAccessToken]);
+
+  // Merge Logic: Use FitData if available, otherwise fallback to simulated
+  const healthDays: HealthDay[] = useMemo(() => {
+    if (!fitData || fitData.length === 0) {
+      return (simulatedHealth as { days: HealthDay[] }).days;
+    }
+
+    // Map Google Fit Data to HealthDay
+    return fitData.map(d => {
+      // Calculate derived sleep metrics
+      const efficiency = d.sleep.totalMinutes > 0 
+        ? (d.sleep.totalMinutes - d.sleep.awakeMinutes) / d.sleep.totalMinutes 
+        : 0.85; // Default fallback
+      
+      const idealSleep = 480; // 8 hours
+      const sleepDebt = Math.max(0, idealSleep - d.sleep.totalMinutes);
+      
+      return {
+        date: d.date,
+        steps: d.steps,
+        hrv: 45 + Math.random() * 20, // Mock HRV (hard to get from basic Fit API)
+        resting_hr: d.heartRate.min > 0 ? d.heartRate.min : 60,
+        blood_pressure: { systolic: 120, diastolic: 80 }, // Mock BP
+        spo2: 98,
+        resp_rate: 14,
+        sleep: {
+          bedtime: d.sleep.startTime, // "23:00"
+          wake: d.sleep.endTime, // "07:00"
+          total_min: d.sleep.totalMinutes,
+          deep_min: d.sleep.deepMinutes,
+          rem_min: d.sleep.remMinutes,
+          light_min: d.sleep.lightMinutes,
+          awake_min: d.sleep.awakeMinutes,
+          efficiency: efficiency,
+          sleep_debt_min: sleepDebt,
+          sleep_inertia_min: 15 // Default
+        }
+      };
+    });
+  }, [fitData]);
+
+  // Food data remains simulated/local for now unless we fetched calories-in from Fit (often not accurate there)
+  // We'll use simulatedFood for structure but could overlay "calories burned" from Fit
   const foodDays = (simulatedFood as { days: FoodDay[] }).days;
+
   const latestHealth = healthDays[healthDays.length - 1];
-  const prevHealth = healthDays[healthDays.length - 2] || latestHealth;
+  // Ensure we have at least 2 days for "previous" calculation
+  const prevHealth = healthDays.length > 1 ? healthDays[healthDays.length - 2] : latestHealth;
+  
   const energyCurve = buildEnergyCurve(prevHealth.sleep);
   const sleepTimeline = buildSleepTimeline(prevHealth.sleep);
 
   const last7Health = healthDays.slice(-7);
   const last7Food = foodDays.slice(-7);
+
+  // Calculate Averages
+  const avgSleepMin = last7Health.reduce((sum, day) => sum + day.sleep.total_min, 0) / last7Health.length;
+  const avgSteps = Math.round(last7Health.reduce((sum, day) => sum + day.steps, 0) / last7Health.length);
+  const avgEfficiency = last7Health.reduce((sum, day) => sum + day.sleep.efficiency, 0) / last7Health.length;
 
   const stressScores = last7Health.map(computeStressScore);
   const avgStress = Math.round(stressScores.reduce((a, b) => a + b, 0) / stressScores.length);
@@ -277,7 +354,7 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
   const ringData = [
     {
       name: 'Sleep',
-      value: clamp((prevHealth.sleep.total_min / 480) * 100, 0, 100),
+      value: clamp((latestHealth.sleep.total_min / 480) * 100, 0, 100),
       fill: '#00d4ff'
     },
     {
@@ -346,7 +423,7 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
 
   useEffect(() => {
     fetchTips();
-  }, []);
+  }, [fitData]); // Re-fetch tips when data changes
 
   return (
     <div className="rd-root">
@@ -367,23 +444,31 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
       <main className="rd-main">
         <section className="rd-hero">
           <div>
-            <div className="rd-kicker">Recovery Dashboard</div>
+            <div className="rd-kicker">
+              Recovery Dashboard 
+              {fitLoading && <span className="rd-loading-badge">Syncing Google Fit...</span>}
+              {!fitLoading && fitData && (
+                <span className="rd-live-badge" onClick={syncData} style={{ cursor: 'pointer' }}>
+                  Live Data {lastSync && `• Last updated ${lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                </span>
+              )}
+            </div>
             <h1>Sleep, Energy, and Recovery Signals</h1>
             <p>Built on your Google Fit Profile</p>
           </div>
           <div className="rd-hero-cards">
             <div className="rd-mini-card">
-              <span>Latest Sleep</span>
-              <strong>{(prevHealth.sleep.total_min / 60).toFixed(1)}h</strong>
-              <small>Efficiency {Math.round(prevHealth.sleep.efficiency * 100)}%</small>
+              <span>7-Day Sleep Avg</span>
+              <strong>{(avgSleepMin / 60).toFixed(1)}h</strong>
+              <small>Efficiency {Math.round(avgEfficiency * 100)}%</small>
             </div>
             <div className="rd-mini-card">
-              <span>HRV Avg</span>
-              <strong>{Math.round(last7Health.reduce((a, b) => a + b.hrv, 0) / last7Health.length)} ms</strong>
-              <small>7-day baseline</small>
+              <span>7-Day Steps Avg</span>
+              <strong>{avgSteps.toLocaleString()}</strong>
+              <small>Daily goal 10k</small>
             </div>
             <div className="rd-mini-card">
-              <span>Stress</span>
+              <span>7-Day Stress Avg</span>
               <strong>{describeStress(avgStress)}</strong>
               <small>Score {avgStress}/100</small>
             </div>
@@ -425,7 +510,11 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
                     <span className="rd-ring-dot" style={{ background: item.fill }} />
                     <div>
                       <strong>{item.name}</strong>
-                      <small>{Math.round(item.value)}% complete</small>
+                      <small>
+                        {item.name === 'Steps' && `${latestHealth.steps.toLocaleString()} / 10k`}
+                        {item.name === 'Sleep' && `${(latestHealth.sleep.total_min / 60).toFixed(1)}h / 8h`}
+                        {item.name === 'Consistency' && `${Math.round(item.value)}% complete`}
+                      </small>
                     </div>
                   </div>
                 ))}

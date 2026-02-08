@@ -3,6 +3,7 @@ import {
   onAuthStateChanged, 
   signInWithPopup, 
   signOut, 
+  GoogleAuthProvider,
   type User 
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
@@ -10,6 +11,7 @@ import { auth, googleProvider } from '../lib/firebase';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  googleAccessToken: string | null;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -19,6 +21,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(
+    localStorage.getItem('google_access_token')
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -30,7 +35,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken;
+      if (token) {
+        setGoogleAccessToken(token);
+        localStorage.setItem('google_access_token', token);
+      }
     } catch (error) {
       console.error("Error signing in with Google", error);
     }
@@ -39,13 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await signOut(auth);
+      setGoogleAccessToken(null);
+      localStorage.removeItem('google_access_token');
     } catch (error) {
       console.error("Error signing out", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, googleAccessToken, signInWithGoogle, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );
