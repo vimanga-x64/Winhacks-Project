@@ -61,6 +61,3 @@ npm run build
 - `assets/screenshots/` screenshots used in README
 - `scripts/` data generation utilities
 
-## Notes
-- If you add new screenshots, keep filenames short and update the `Screenshots` section above.
-- If you change API routes, update `openai_service.py` and any client calls in `src/`.
