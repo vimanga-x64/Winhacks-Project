@@ -735,12 +735,16 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
 
   const handleGainEnter = async (index: number) => {
     if (isSummarized) return;
+    
+    setGainEntries((prev) => {
+      if (!prev[index] || !prev[index].input.trim()) return prev;
+      const newEntries = [...prev];
+      newEntries[index] = { ...newEntries[index], loading: true };
+      return newEntries;
+    });
+
     const currentEntry = gainEntries[index];
     if (!currentEntry.input.trim()) return;
-
-    const newEntries = [...gainEntries];
-    newEntries[index].loading = true;
-    setGainEntries(newEntries);
 
     // Call API
     const calories = await estimateEntry('food', currentEntry.input);
@@ -753,40 +757,32 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
   const handleGainInput = (index: number, value: string) => {
     if (isSummarized) return;
     
-    const newEntries = [...gainEntries];
-    newEntries[index].input = value;
-    setGainEntries(newEntries);
-
-    // If input is empty, clear calories
-    if (!value.trim()) {
-      newEntries[index].calories = null;
-      newEntries[index].loading = false;
-      setGainEntries(newEntries);
-      const entryId = newEntries[index].id;
-      if (gainTimersRef.current[entryId]) {
-        clearTimeout(gainTimersRef.current[entryId] as ReturnType<typeof setTimeout>);
-        gainTimersRef.current[entryId] = null;
+    setGainEntries((prev) => {
+      const newEntries = [...prev];
+      if (!newEntries[index]) return prev;
+      newEntries[index] = { ...newEntries[index], input: value };
+      
+      // If input is empty, clear calories
+      if (!value.trim()) {
+        newEntries[index].calories = null;
+        newEntries[index].loading = false;
       }
-      return;
-    }
-
-    const entryId = newEntries[index].id;
-    if (gainTimersRef.current[entryId]) {
-      clearTimeout(gainTimersRef.current[entryId] as ReturnType<typeof setTimeout>);
-    }
-    gainTimersRef.current[entryId] = setTimeout(() => {
-      handleGainEnter(index);
-    }, 800);
+      return newEntries;
+    });
   };
 
   const handleLostEnter = async (index: number) => {
     if (isSummarized) return;
+
+    setLostEntries((prev) => {
+      if (!prev[index] || !prev[index].activity.trim() || !prev[index].duration.trim()) return prev;
+      const newEntries = [...prev];
+      newEntries[index] = { ...newEntries[index], loading: true };
+      return newEntries;
+    });
+
     const currentEntry = lostEntries[index];
     if (!currentEntry.activity.trim() || !currentEntry.duration.trim()) return; 
-
-    const newEntries = [...lostEntries];
-    newEntries[index].loading = true;
-    setLostEntries(newEntries);
 
     const calories = await estimateEntry('activity', `${currentEntry.activity} for ${currentEntry.duration}`, parseFloat(stats.weight));
     
@@ -798,30 +794,18 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
   const handleLostInput = (index: number, field: 'activity' | 'duration', value: string) => {
     if (isSummarized) return;
     
-    const newEntries = [...lostEntries];
-    newEntries[index][field] = value;
-    setLostEntries(newEntries);
+    setLostEntries((prev) => {
+      const newEntries = [...prev];
+      if (!newEntries[index]) return prev;
+      newEntries[index] = { ...newEntries[index], [field]: value };
 
-    // If both fields are empty, clear calories
-    if (!newEntries[index].activity.trim() || !newEntries[index].duration.trim()) {
-      newEntries[index].calories = null;
-      newEntries[index].loading = false;
-      setLostEntries(newEntries);
-      const entryId = newEntries[index].id;
-      if (lostTimersRef.current[entryId]) {
-        clearTimeout(lostTimersRef.current[entryId] as ReturnType<typeof setTimeout>);
-        lostTimersRef.current[entryId] = null;
+      // If both fields are empty, clear calories
+      if (!newEntries[index].activity.trim() || !newEntries[index].duration.trim()) {
+        newEntries[index].calories = null;
+        newEntries[index].loading = false;
       }
-      return;
-    }
-
-    const entryId = newEntries[index].id;
-    if (lostTimersRef.current[entryId]) {
-      clearTimeout(lostTimersRef.current[entryId] as ReturnType<typeof setTimeout>);
-    }
-    lostTimersRef.current[entryId] = setTimeout(() => {
-      handleLostEnter(index);
-    }, 800);
+      return newEntries;
+    });
   };
 
   const handleOtherEnter = async (index: number) => {
