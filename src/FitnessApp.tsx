@@ -119,7 +119,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
   const synthesizerRef = useRef<SpeechSDK.SpeechSynthesizer | null>(null);
   const playerRef = useRef<SpeechSDK.SpeakerAudioDestination | null>(null);
 
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   const speakRecommendation = (text: string) => {
     if (!text.trim()) return;
