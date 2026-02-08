@@ -1274,13 +1274,10 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     value={entry.input}
                     onChange={(e) => {
                       handleGainInput(idx, e.target.value);
-                      if (idx === gainEntries.length - 1 && e.target.value.trim() && gainEntries[idx].input === '') {
-                        const newId = generateId();
-                        setGainEntries(prev => [...prev, { id: newId, meal: 'Snack', input: '', calories: null, loading: false, locked: false }]);
-                      }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
+                        if (!entry.input.trim()) return;
                         e.preventDefault();
                         handleGainEnter(idx);
                         const newId = generateId();
@@ -1320,10 +1317,6 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     value={entry.activity}
                     onChange={(e) => {
                       handleLostInput(idx, 'activity', e.target.value);
-                      if (idx === lostEntries.length - 1 && e.target.value && lostEntries[idx].activity === '') {
-                        const newId = generateId();
-                        setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
-                      }
                     }}
                   >
                     <option value="" disabled>Select Activity</option>
@@ -1349,6 +1342,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     onChange={(e) => handleLostInput(idx, 'duration', e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
+                        if (!entry.activity.trim() || !entry.duration.trim()) return;
                         e.preventDefault();
                         handleLostEnter(idx);
                         const newId = generateId();
@@ -1388,10 +1382,6 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     value={entry.category}
                     onChange={(e) => {
                       handleOtherInput(idx, 'category', e.target.value);
-                      if (idx === otherEntries.length - 1 && e.target.value && otherEntries[idx].category === '') {
-                        const newId = generateId();
-                        setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
-                      }
                     }}
                   >
                     <option value="" disabled>Category</option>
@@ -1415,6 +1405,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     onChange={(e) => handleOtherInput(idx, 'input', e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
+                        if (!entry.category.trim() || !entry.input.trim()) return;
                         e.preventDefault();
                         handleOtherEnter(idx);
                         const newId = generateId();
