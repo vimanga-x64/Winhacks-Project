@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download, Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import '@google/model-viewer';
 import * as THREE from 'three';
@@ -12,6 +12,7 @@ import talkAnim04 from './assets/avatar_model/animation-library-master/animation
 import talkAnim05 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_005.glb';
 import idleAnimUrl from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/idle/M_Standing_Idle_001.glb';
 import PdfReport from './components/PdfReport';
+import { useAuth } from './context/AuthContext';
 import './FitnessApp.css';
 
 // --- Types ---
@@ -84,6 +85,7 @@ type ModelViewerProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement
 const ModelViewer = (props: ModelViewerProps) => React.createElement('model-viewer', props);
 
 const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
+  const { logout } = useAuth();
   // --- General Stats State ---
   const [isSummarized, setIsSummarized] = useState(false);
   const [editingBio, setEditingBio] = useState(false); // Toggle for bio editing
@@ -875,6 +877,9 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                 <ArrowLeft size={14} /> Home
               </button>
             )}
+            <button className="fa-back-btn" onClick={logout} style={{ marginLeft: '1rem', color: '#ef4444' }}>
+              <LogOut size={14} /> Logout
+            </button>
           </div>
         </div>
       </header>
