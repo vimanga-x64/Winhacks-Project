@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download, Volume2, VolumeX, LogOut } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import '@google/model-viewer';
 import * as THREE from 'three';
