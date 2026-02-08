@@ -1,6 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download, Volume2, VolumeX } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
+import '@google/model-viewer';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import avatarModelUrl from './assets/avatar_model/6987da136eb4878bb8625c33.glb';
+import talkAnim01 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_001.glb';
+import talkAnim02 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_002.glb';
+import talkAnim03 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_003.glb';
+import talkAnim04 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_004.glb';
+import talkAnim05 from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/expression/M_Talking_Variations_005.glb';
+import idleAnimUrl from './assets/avatar_model/animation-library-master/animation-library-master/masculine/glb/idle/M_Standing_Idle_001.glb';
 import PdfReport from './components/PdfReport';
 import './FitnessApp.css';
 
@@ -51,6 +61,28 @@ interface FitnessAppProps {
   onBack?: () => void;
 }
 
+type ModelViewerProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+  src?: string;
+  alt?: string;
+  'camera-controls'?: boolean;
+  'auto-rotate'?: boolean;
+  'camera-orbit'?: string;
+  'camera-target'?: string;
+  'field-of-view'?: string;
+  autoplay?: boolean;
+  'animation-loop'?: boolean;
+  exposure?: string | number;
+  'shadow-intensity'?: string | number;
+  'interaction-prompt'?: string;
+  'disable-tap'?: boolean;
+  'disable-pan'?: boolean;
+  'disable-zoom'?: boolean;
+  'orbit-sensitivity'?: number;
+  'touch-action'?: string;
+};
+
+const ModelViewer = (props: ModelViewerProps) => React.createElement('model-viewer', props);
+
 const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
   // --- General Stats State ---
   const [isSummarized, setIsSummarized] = useState(false);
@@ -60,8 +92,394 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
   
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(true);
+  const lastSpokenRef = useRef<string | null>(null);
+
+  // --- Animation refs ---
+  const avatarContainerRef = useRef<HTMLDivElement>(null);
+  const modelViewerElRef = useRef<any>(null);
+  const morphMeshesRef = useRef<any[]>([]);
+  const forceRenderFnRef = useRef<(() => void) | null>(null);
+  const animRafRef = useRef<number | null>(null);
+  const animMixerRef = useRef<THREE.AnimationMixer | null>(null);
+  const animClipsRef = useRef<THREE.AnimationClip[]>([]);
+  const currentActionRef = useRef<THREE.AnimationAction | null>(null);
+  const sceneRootRef = useRef<any>(null);
+  const idleClipRef = useRef<THREE.AnimationClip | null>(null);
+  const idleRafRef = useRef<number | null>(null);
+  const idleActionRef = useRef<THREE.AnimationAction | null>(null);
+
+  // Preload TTS voices as early as possible
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+    }
+  }, []);
 
   const API_BASE_URL = "http://localhost:8000";
+  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  const ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const speakRecommendation = (text: string) => {
+    if (!('speechSynthesis' in window) || !text.trim()) return;
+    window.speechSynthesis.cancel();
+
+    // Clear any previous keep-alive timer
+    if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+
+    // Minimal delay after cancel() to avoid Chrome dropping the utterance
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      // Ensure voices are loaded
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Prefer an English voice
+        const englishVoice = voices.find(v => v.lang.startsWith('en'));
+        if (englishVoice) utterance.voice = englishVoice;
+      }
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+      };
+      utterance.onerror = (e) => {
+        console.warn('[FitTrack] TTS error:', e);
+        setIsSpeaking(false);
+        if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+      };
+
+      setIsSpeaking(true);
+      window.speechSynthesis.speak(utterance);
+      lastSpokenRef.current = text;
+
+      // Chrome bug workaround: pause/resume every 10s to prevent cutoff
+      ttsKeepAliveRef.current = setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+          if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+          return;
+        }
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }, 10000);
+    }, 30);
+  };
+
+  const stopSpeaking = () => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    if (ttsKeepAliveRef.current) { clearInterval(ttsKeepAliveRef.current); ttsKeepAliveRef.current = null; }
+  };
+
+  // --- Discover scene, morph targets, and create AnimationMixer ---
+  const initModel = useCallback(() => {
+    const mv = modelViewerElRef.current;
+    if (!mv) return;
+
+    const meshes: any[] = [];
+    let needsRenderFn: (() => void) | null = null;
+    let scene: any = null;
+
+    try {
+      const allSymbols: symbol[] = [];
+      let obj: any = mv;
+      while (obj && obj !== HTMLElement.prototype) {
+        try { allSymbols.push(...Object.getOwnPropertySymbols(obj)); } catch (_) { /* skip */ }
+        obj = Object.getPrototypeOf(obj);
+      }
+
+      for (const sym of allSymbols) {
+        try {
+          const desc = sym.description || sym.toString();
+          const val = mv[sym];
+
+          if (!scene && (desc === 'scene' || desc === 'modelScene')) {
+            if (val && typeof val.traverse === 'function') scene = val;
+            else if (val?.scene && typeof val.scene.traverse === 'function') scene = val.scene;
+          }
+
+          if (desc === 'needsRender' && typeof val === 'function') {
+            const capturedSym = sym;
+            needsRenderFn = () => { try { mv[capturedSym](); } catch (_) {} };
+          }
+        } catch (_) { /* skip */ }
+      }
+
+      if (scene) {
+        scene.traverse((node: any) => {
+          if (node.isMesh && node.morphTargetInfluences && node.morphTargetDictionary) {
+            meshes.push(node);
+          }
+        });
+
+        // Create AnimationMixer on scene root for skeletal animations
+        sceneRootRef.current = scene;
+        animMixerRef.current = new THREE.AnimationMixer(scene);
+        console.log('[FitTrack] AnimationMixer created on scene root');
+      }
+    } catch (e) {
+      console.warn('[FitTrack] Model init failed:', e);
+    }
+
+    morphMeshesRef.current = meshes;
+    forceRenderFnRef.current = needsRenderFn;
+
+    if (meshes.length > 0) {
+      const names = meshes.flatMap((m: any) => Object.keys(m.morphTargetDictionary));
+      console.log('[FitTrack] Found morph targets:', [...new Set(names)]);
+    }
+  }, []);
+
+  // --- Load animation clips from GLBs (talk + idle) ---
+  useEffect(() => {
+    const loader = new GLTFLoader();
+    const talkUrls = [talkAnim01, talkAnim02, talkAnim03, talkAnim04, talkAnim05];
+
+    // Load talking animations
+    Promise.all(
+      talkUrls.map(url =>
+        new Promise<THREE.AnimationClip[]>((resolve) => {
+          loader.load(
+            url,
+            (gltf) => {
+              console.log('[FitTrack] Loaded talk anim', url.slice(-20), '- clips:', gltf.animations.length);
+              resolve(gltf.animations);
+            },
+            undefined,
+            (err) => { console.warn('[FitTrack] Failed to load animation:', err); resolve([]); }
+          );
+        })
+      )
+    ).then(results => {
+      animClipsRef.current = results.flat();
+      console.log('[FitTrack] Total talk clips loaded:', animClipsRef.current.length);
+    });
+
+    // Load idle animation
+    loader.load(
+      idleAnimUrl,
+      (gltf) => {
+        if (gltf.animations.length > 0) {
+          idleClipRef.current = gltf.animations[0];
+          console.log('[FitTrack] Idle animation loaded:', gltf.animations[0].name, 'duration:', gltf.animations[0].duration.toFixed(1) + 's');
+        }
+      },
+      undefined,
+      (err) => console.warn('[FitTrack] Failed to load idle animation:', err)
+    );
+  }, []);
+
+  // Connect to the model-viewer DOM element and listen for load
+  useEffect(() => {
+    const container = avatarContainerRef.current;
+    if (!container) return;
+
+    const mv = container.querySelector('model-viewer') as any;
+    if (!mv) return;
+
+    modelViewerElRef.current = mv;
+
+    const onLoad = () => initModel();
+    mv.addEventListener('load', onLoad);
+    if (mv.loaded) initModel();
+
+    return () => {
+      mv.removeEventListener('load', onLoad);
+    };
+  }, [showAvatar, isSummarized, recommendation, initModel]);
+
+  // --- Helper: start idle animation loop ---
+  const startIdleAnimation = useCallback(() => {
+    const mixer = animMixerRef.current;
+    const idleClip = idleClipRef.current;
+    if (!mixer || !idleClip) return;
+
+    // Stop any current actions first
+    mixer.stopAllAction();
+    currentActionRef.current = null;
+
+    const action = mixer.clipAction(idleClip);
+    action.reset();
+    action.setLoop(THREE.LoopRepeat, Infinity);
+    action.clampWhenFinished = false;
+    action.fadeIn(0.4);
+    action.play();
+    idleActionRef.current = action;
+    console.log('[FitTrack] Playing idle animation');
+
+    // Start a persistent RAF loop for the idle animation
+    if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current);
+    let lastTime = performance.now();
+    const tick = (time: number) => {
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+      mixer.update(delta);
+      if (forceRenderFnRef.current) forceRenderFnRef.current();
+      idleRafRef.current = requestAnimationFrame(tick);
+    };
+    idleRafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  // --- Stop idle animation ---
+  const stopIdleAnimation = useCallback(() => {
+    if (idleActionRef.current) {
+      idleActionRef.current.fadeOut(0.3);
+      idleActionRef.current = null;
+    }
+    if (idleRafRef.current) {
+      cancelAnimationFrame(idleRafRef.current);
+      idleRafRef.current = null;
+    }
+  }, []);
+
+  // --- Start idle animation when model loads ---
+  useEffect(() => {
+    if (!showAvatar) return;
+    const checkInterval = setInterval(() => {
+      if (animMixerRef.current && idleClipRef.current && !isSpeaking) {
+        clearInterval(checkInterval);
+        startIdleAnimation();
+      }
+    }, 50);
+    return () => clearInterval(checkInterval);
+  }, [showAvatar, isSummarized, recommendation, startIdleAnimation]);
+
+  // --- Animate during TTS: skeletal (arms/body) + morph targets (mouth) ---
+  useEffect(() => {
+    const mixer = animMixerRef.current;
+    const clips = animClipsRef.current;
+    const meshes = morphMeshesRef.current;
+
+    const resetTalkMorphs = () => {
+      meshes.forEach((mesh: any) => {
+        if (!mesh.morphTargetInfluences) return;
+        for (let i = 0; i < mesh.morphTargetInfluences.length; i++) {
+          mesh.morphTargetInfluences[i] = 0;
+        }
+      });
+      if (forceRenderFnRef.current) forceRenderFnRef.current();
+    };
+
+    if (!isSpeaking || !showAvatar) {
+      // Stop talking animations and go back to idle
+      if (currentActionRef.current) {
+        currentActionRef.current.fadeOut(0.3);
+        currentActionRef.current = null;
+      }
+      if (animRafRef.current) {
+        cancelAnimationFrame(animRafRef.current);
+        animRafRef.current = null;
+      }
+      resetTalkMorphs();
+
+      // Resume idle when speaking stops (but avatar still visible)
+      if (showAvatar && mixer && idleClipRef.current) {
+        startIdleAnimation();
+      }
+      return;
+    }
+
+    // --- Speaking started: stop idle, start talk animations ---
+    stopIdleAnimation();
+    if (mixer) mixer.stopAllAction();
+
+    let clipSwitchTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const playRandomClip = () => {
+      if (!mixer || clips.length === 0) return;
+
+      let nextClip = clips[Math.floor(Math.random() * clips.length)];
+      if (clips.length > 1 && currentActionRef.current) {
+        const currentClipName = currentActionRef.current.getClip().name;
+        while (nextClip.name === currentClipName) {
+          nextClip = clips[Math.floor(Math.random() * clips.length)];
+        }
+      }
+
+      const nextAction = mixer.clipAction(nextClip);
+      nextAction.reset();
+      nextAction.setLoop(THREE.LoopOnce, 1);
+      nextAction.clampWhenFinished = false;
+
+      if (currentActionRef.current) {
+        nextAction.fadeIn(0.4);
+        currentActionRef.current.fadeOut(0.4);
+      } else {
+        nextAction.fadeIn(0.3);
+      }
+
+      nextAction.play();
+      currentActionRef.current = nextAction;
+
+      clipSwitchTimer = setTimeout(() => {
+        playRandomClip();
+      }, nextClip.duration * 1000 - 400);
+    };
+
+    playRandomClip();
+
+    // Combined RAF: skeletal mixer + morph mouth
+    let lastTime = performance.now();
+    const startTime = performance.now();
+
+    const animate = (time: number) => {
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+      const elapsed = (time - startTime) / 1000;
+
+      if (mixer) mixer.update(delta);
+
+      meshes.forEach((mesh: any) => {
+        if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
+
+        const mouthOpenIdx = mesh.morphTargetDictionary['mouthOpen'];
+        if (mouthOpenIdx !== undefined) {
+          mesh.morphTargetInfluences[mouthOpenIdx] =
+            Math.max(0, Math.sin(elapsed * 4.5)) * 0.5 +
+            Math.max(0, Math.sin(elapsed * 7.3 + 1.2)) * 0.3;
+        }
+
+        const mouthSmileIdx = mesh.morphTargetDictionary['mouthSmile'];
+        if (mouthSmileIdx !== undefined) {
+          mesh.morphTargetInfluences[mouthSmileIdx] =
+            0.1 + Math.max(0, Math.sin(elapsed * 0.8)) * 0.15;
+        }
+      });
+
+      if (forceRenderFnRef.current) forceRenderFnRef.current();
+      animRafRef.current = requestAnimationFrame(animate);
+    };
+
+    animRafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (clipSwitchTimer) clearTimeout(clipSwitchTimer);
+      if (animRafRef.current) {
+        cancelAnimationFrame(animRafRef.current);
+        animRafRef.current = null;
+      }
+      if (currentActionRef.current) {
+        currentActionRef.current.fadeOut(0.3);
+        currentActionRef.current = null;
+      }
+      resetTalkMorphs();
+    };
+  }, [isSpeaking, showAvatar, startIdleAnimation, stopIdleAnimation]);
+
+  useEffect(() => {
+    if (!isSummarized || recommendationLoading || !recommendation || !showAvatar) return;
+    if (lastSpokenRef.current === recommendation) return;
+    speakRecommendation(recommendation);
+    return () => {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+  }, [isSummarized, recommendation, recommendationLoading, showAvatar]);
 
   // Convert userData to stats format
   const getInitialStats = () => {
@@ -419,6 +837,8 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
     if (isSummarized) {
       setIsSummarized(false);
       setRecommendation(null);
+      lastSpokenRef.current = null;
+      stopSpeaking();
     } else {
       setGainEntries(prev => prev.filter(e => e.input.trim() !== ''));
       setLostEntries(prev => prev.filter(e => e.activity.trim() !== '' && e.duration.trim() !== ''));
@@ -463,21 +883,70 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
         
         {/* Recommendation Section (Visible when summarized) */}
         {(recommendation || recommendationLoading) && isSummarized && (
-           <section className="fa-card fa-recommendation-card" style={{ padding: '2rem', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                 <div style={{ background: '#ef4444', padding: '0.75rem', borderRadius: '50%', color: 'white' }}>
-                    <Check size={24} />
-                 </div>
-                 <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem', color: 'white' }}>Daily Analysis</h3>
-                    {recommendationLoading ? (
-                        <div style={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>Analyzing your data with AI...</div>
-                    ) : (
-                        <p style={{ lineHeight: 1.6, color: 'rgba(255,255,255,0.9)', fontSize: '1rem' }}>{recommendation}</p>
-                    )}
-                 </div>
+          <section className="fa-card fa-recommendation">
+            <div className="fa-recommendation-layout">
+              <div className="fa-recommendation-content">
+                <div className="fa-recommendation-header">
+                  <div className="fa-recommendation-icon">
+                    <Check size={20} />
+                  </div>
+                  <div>
+                    <h3 className="fa-recommendation-title">Daily Analysis</h3>
+                    <div className="fa-recommendation-subtitle">AI-guided summary based on today&apos;s entries.</div>
+                  </div>
+                </div>
+                {recommendationLoading ? (
+                  <div className="fa-recommendation-loading">Analyzing your data with AI...</div>
+                ) : (
+                  <p className="fa-recommendation-text">{recommendation}</p>
+                )}
+                <div className="fa-recommendation-actions">
+                  <button
+                    className="fa-pill-btn"
+                    onClick={() => recommendation && speakRecommendation(recommendation)}
+                    disabled={!canSpeak || recommendationLoading || !recommendation}
+                  >
+                    <Volume2 size={14} /> Replay Audio
+                  </button>
+                  {isSpeaking && (
+                    <button className="fa-pill-btn" onClick={stopSpeaking}>
+                      <VolumeX size={14} /> Stop
+                    </button>
+                  )}
+                  <button
+                    className="fa-pill-btn"
+                    onClick={() => {
+                      if (showAvatar) stopSpeaking();
+                      setShowAvatar(prev => !prev);
+                    }}
+                  >
+                    {showAvatar ? 'Hide Avatar' : 'Show Avatar'}
+                  </button>
+                </div>
               </div>
-           </section>
+              {showAvatar && (
+                <div className="fa-recommendation-model" ref={avatarContainerRef}>
+                  <ModelViewer
+                    src={avatarModelUrl}
+                    camera-orbit="0deg 85deg 0.7m"
+                    camera-target="0m 1.6m 0m"
+                    field-of-view="18deg"
+                    interaction-prompt="none"
+                    disable-tap
+                    disable-pan
+                    disable-zoom
+                    orbit-sensitivity={0}
+                    touch-action="none"
+                    exposure="0.9"
+                    shadow-intensity="0"
+                    alt="FitTrack coach avatar"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <div className="fa-recommendation-model-label">{isSpeaking ? 'Speaking...' : 'Coach Avatar'}</div>
+                </div>
+              )}
+            </div>
+          </section>
         )}
 
         {/* --- Biometrics Bar --- */}
@@ -917,16 +1386,16 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                         fileName={`FitTrack_Report_${new Date().toISOString().split('T')[0]}.pdf`}
                         style={{ textDecoration: 'none' }}
                     >
-                        {({ blob, url, loading, error }) => (
-                            <button 
-                                className="fa-unlock-btn" 
-                                disabled={loading}
-                                style={{ background: '#ef4444', color: '#ffffff', border: 'none' }}
-                            >
-                                <Download size={18} />
-                                {loading ? 'Preparing...' : 'Download Report'}
-                            </button>
-                        )}
+                      {({ loading }) => (
+                        <button 
+                          className="fa-unlock-btn" 
+                          disabled={loading}
+                          style={{ background: '#ef4444', color: '#ffffff', border: 'none' }}
+                        >
+                          <Download size={18} />
+                          {loading ? 'Preparing...' : 'Download Report'}
+                        </button>
+                      )}
                     </PDFDownloadLink>
                 )}
             </div>

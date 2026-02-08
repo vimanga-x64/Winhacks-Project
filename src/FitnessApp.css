@@ -180,6 +180,105 @@
   animation: faFadeUp 0.6s ease both;
 }
 
+/* ---------- DAILY ANALYSIS ---------- */
+.fa-recommendation {
+  padding: 1.75rem 2rem;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.05);
+}
+
+.fa-recommendation-layout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.fa-recommendation-header {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.fa-recommendation-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 18px rgba(239,68,68,0.45);
+  flex-shrink: 0;
+}
+
+.fa-recommendation-title {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: #ffffff;
+}
+
+.fa-recommendation-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.fa-recommendation-text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.92);
+  margin: 0.75rem 0 1rem;
+}
+
+.fa-recommendation-loading {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.6);
+  font-style: italic;
+  margin-top: 0.75rem;
+}
+
+.fa-recommendation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.fa-recommendation-model {
+  background: rgba(15,15,15,0.7);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 0.15rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  overflow: hidden;
+  width: 140px;
+}
+
+.fa-recommendation-model model-viewer {
+  width: 100%;
+  height: 120px;
+  background: radial-gradient(circle at 50% 50%, rgba(239,68,68,0.12), transparent 70%);
+}
+
+.fa-recommendation-model-label {
+  margin-top: 0.3rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
 /* ---------- BIO SECTION ---------- */
 .fa-bio {
   padding: 1.75rem 2rem;
@@ -833,6 +932,12 @@ select.fa-entry-input option {
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 1024px) {
+  .fa-recommendation-layout {
+    grid-template-columns: 1fr;
+  }
+  .fa-recommendation-model model-viewer {
+    height: 120px;
+  }
   .fa-strategy-inner {
     flex-direction: column;
   }
