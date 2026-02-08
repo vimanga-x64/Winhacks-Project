@@ -135,9 +135,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
 
     // Minimal delay after cancel() to avoid Chrome dropping the utterance
     setTimeout(() => {
-      // Clean text for better TTS: remove "*" bullet points
-      const cleanText = text.replace(/^\s*\*\s+/gm, '');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1;
       utterance.pitch = 1;
 
@@ -549,6 +547,10 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
   const lostInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const otherInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   
+  // --- Debounce timers ---
+  const gainTimers = useRef<{ [key: string]: number }>({});
+  const lostTimers = useRef<{ [key: string]: number }>({});
+  const otherTimers = useRef<{ [key: string]: number }>({});
 
   // --- Calculations ---
   useEffect(() => {
@@ -637,19 +639,15 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     }
   };
 
-  const getDailyRecommendation = async (currentGainEntries?: GainEntry[], currentLostEntries?: LostEntry[], currentOtherEntries?: OtherEntry[]) => {
+  const getDailyRecommendation = async () => {
     setRecommendationLoading(true);
     setRecommendation(null);
     
     try {
-        const gains = currentGainEntries || gainEntries;
-        const losts = currentLostEntries || lostEntries;
-        const others = currentOtherEntries || otherEntries;
-
         // Collect data
         const tdee = metrics.tdee !== '--' ? parseFloat(metrics.tdee) : 2000;
-        const totalConsumed = gains.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
-        const totalBurned = losts.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
+        const totalConsumed = gainEntries.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
+        const totalBurned = lostEntries.reduce((acc, e) => acc + (e.calories ? parseFloat(e.calories) : 0), 0);
         const netKcal = totalConsumed - totalBurned;
         const targetKcal = metrics.calorieGoal !== '--' ? parseFloat(metrics.calorieGoal) : 2000;
         
@@ -681,10 +679,10 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
             additional_info: {
                 sleep_hours: 8, // Placeholder or extract from 'Other' entries if tagged
                 mood: "normal",
-                notes: others.map(e => `${e.category}: ${e.input}`).join('; ')
+                notes: otherEntries.map(e => `${e.category}: ${e.input}`).join('; ')
             },
-            food_summary: gains.filter(e => e.input && e.calories).map(e => `${e.input} (${e.calories} kcal)`),
-            activity_summary: losts.filter(e => e.activity && e.calories).map(e => `${e.activity} ${e.duration} (${e.calories} kcal)`)
+            food_summary: gainEntries.filter(e => e.input && e.calories).map(e => `${e.input} (${e.calories} kcal)`),
+            activity_summary: lostEntries.filter(e => e.activity && e.calories).map(e => `${e.activity} ${e.duration} (${e.calories} kcal)`)
         };
 
         const res = await fetch(`${API_BASE_URL}/recommendation`, {
@@ -734,6 +732,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     newEntries[index].input = value;
     setGainEntries(newEntries);
 
+    // Clear existing timer
+    if (gainTimers.current[newEntries[index].id]) {
+      clearTimeout(gainTimers.current[newEntries[index].id]);
+    }
+
     // If input is empty, clear calories
     if (!value.trim()) {
       newEntries[index].calories = null;
@@ -741,6 +744,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
       setGainEntries(newEntries);
       return;
     }
+
+    // Set new timer for debounce (1500ms)
+    gainTimers.current[newEntries[index].id] = window.setTimeout(() => {
+      handleGainEnter(index);
+    }, 1500);
   };
 
   const handleLostEnter = async (index: number) => {
@@ -766,6 +774,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     newEntries[index][field] = value;
     setLostEntries(newEntries);
 
+    // Clear existing timer
+    if (lostTimers.current[newEntries[index].id]) {
+      clearTimeout(lostTimers.current[newEntries[index].id]);
+    }
+
     // If both fields are empty, clear calories
     if (!newEntries[index].activity.trim() || !newEntries[index].duration.trim()) {
       newEntries[index].calories = null;
@@ -773,6 +786,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
       setLostEntries(newEntries);
       return;
     }
+
+    // Set new timer for debounce (1500ms)
+    lostTimers.current[newEntries[index].id] = window.setTimeout(() => {
+      handleLostEnter(index);
+    }, 1500);
   };
 
   const handleOtherEnter = async (index: number) => {
@@ -799,6 +817,11 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     newEntries[index][field] = value;
     setOtherEntries(newEntries);
 
+    // Clear existing timer
+    if (otherTimers.current[newEntries[index].id]) {
+      clearTimeout(otherTimers.current[newEntries[index].id]);
+    }
+
     // If both fields are empty, clear response
     if (!newEntries[index].input.trim() || !newEntries[index].category.trim()) {
       newEntries[index].response = null;
@@ -806,44 +829,25 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
       setOtherEntries(newEntries);
       return;
     }
+
+    // Set new timer for debounce (1500ms)
+    otherTimers.current[newEntries[index].id] = window.setTimeout(() => {
+      handleOtherEnter(index);
+    }, 1500);
   };
 
-  const toggleSummarize = async () => {
+  const toggleSummarize = () => {
     if (isSummarized) {
       setIsSummarized(false);
       setRecommendation(null);
       lastSpokenRef.current = null;
       stopSpeaking();
     } else {
-      // 1. Filter out completely empty entries first
-      const validGains = gainEntries.filter(e => e.input.trim() !== '');
-      const validLosts = lostEntries.filter(e => e.activity.trim() !== '' && e.duration.trim() !== '');
-      const validOthers = otherEntries.filter(e => e.input.trim() !== '' && e.category.trim() !== '');
-
-      // 2. Estimate those that don't have calories yet
-      const estimatedGains = await Promise.all(validGains.map(async e => {
-        if (e.calories) return e;
-        const cals = await estimateEntry('food', e.input);
-        return { ...e, calories: cals };
-      }));
-
-      const estimatedLosts = await Promise.all(validLosts.map(async e => {
-        if (e.calories) return e;
-        const cals = await estimateEntry('activity', `${e.activity} for ${e.duration}`, parseFloat(stats.weight));
-        return { ...e, calories: cals };
-      }));
-
-      // 3. Update state
-      setGainEntries(estimatedGains);
-      setLostEntries(estimatedLosts);
-      setOtherEntries(validOthers);
+      setGainEntries(prev => prev.filter(e => e.input.trim() !== ''));
+      setLostEntries(prev => prev.filter(e => e.activity.trim() !== '' && e.duration.trim() !== ''));
+      setOtherEntries(prev => prev.filter(e => e.input.trim() !== '' && e.category.trim() !== ''));
       setIsSummarized(true);
-      
-      // Scroll to top to see recommendation
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // 4. Call recommendation with the freshly estimated data
-      getDailyRecommendation(estimatedGains, estimatedLosts, validOthers);
+      getDailyRecommendation();
     }
   };
 
@@ -906,39 +910,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                 {recommendationLoading ? (
                   <div className="fa-recommendation-loading">Analyzing your data with AI...</div>
                 ) : (
-                  <div className="fa-recommendation-text">
-                    {(() => {
-                      if (!recommendation) return null;
-                      const lines = recommendation.split('\n');
-                      const elements: React.ReactNode[] = [];
-                      let currentList: React.ReactNode[] = [];
-
-                      lines.forEach((line, i) => {
-                        const trimmed = line.trim();
-                        if (trimmed.startsWith('* ')) {
-                          currentList.push(
-                            <li key={`li-${i}`} style={{ marginLeft: '1.2rem', listStyleType: 'disc', marginBottom: '0.4rem' }}>
-                              {trimmed.substring(2)}
-                            </li>
-                          );
-                        } else {
-                          if (currentList.length > 0) {
-                            elements.push(<ul key={`ul-${i}`} style={{ marginBottom: '1rem', marginTop: '0.5rem' }}>{currentList}</ul>);
-                            currentList = [];
-                          }
-                          if (trimmed) {
-                            elements.push(<p key={`p-${i}`} style={{ marginBottom: '0.75rem' }}>{line}</p>);
-                          }
-                        }
-                      });
-
-                      if (currentList.length > 0) {
-                        elements.push(<ul key="ul-final" style={{ marginBottom: '1rem', marginTop: '0.5rem' }}>{currentList}</ul>);
-                      }
-
-                      return elements;
-                    })()}
-                  </div>
+                  <p className="fa-recommendation-text">{recommendation}</p>
                 )}
                 <div className="fa-recommendation-actions">
                   <button
@@ -1248,7 +1220,6 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
                         e.preventDefault();
-                        handleGainEnter(idx);
                         const newId = generateId();
                         setGainEntries(prev => [...prev, { id: newId, meal: 'Snack', input: '', calories: null, loading: false, locked: false }]);
                         setTimeout(() => {
@@ -1316,7 +1287,6 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
                         e.preventDefault();
-                        handleLostEnter(idx);
                         const newId = generateId();
                         setLostEntries(prev => [...prev, { id: newId, activity: '', duration: '', calories: null, loading: false, locked: false }]);
                         setTimeout(() => {
@@ -1382,7 +1352,6 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isSummarized) {
                         e.preventDefault();
-                        handleOtherEnter(idx);
                         const newId = generateId();
                         setOtherEntries(prev => [...prev, { id: newId, category: '', input: '', response: null, loading: false, locked: false }]);
                         setTimeout(() => {

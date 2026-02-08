@@ -1,0 +1,298 @@
+{
+  "days": [
+    {
+      "date": "2026-01-25",
+      "steps": 8240,
+      "hrv": 46,
+      "resting_hr": 61,
+      "blood_pressure": { "systolic": 122, "diastolic": 79 },
+      "spo2": 97,
+      "resp_rate": 15.4,
+      "sleep": {
+        "bedtime": "23:28",
+        "wake": "06:55",
+        "total_min": 430,
+        "deep_min": 82,
+        "rem_min": 94,
+        "light_min": 210,
+        "awake_min": 44,
+        "efficiency": 0.86,
+        "sleep_debt_min": 55,
+        "sleep_inertia_min": 34
+      }
+    },
+    {
+      "date": "2026-01-26",
+      "steps": 9020,
+      "hrv": 48,
+      "resting_hr": 60,
+      "blood_pressure": { "systolic": 120, "diastolic": 78 },
+      "spo2": 97,
+      "resp_rate": 15.1,
+      "sleep": {
+        "bedtime": "23:15",
+        "wake": "07:06",
+        "total_min": 451,
+        "deep_min": 88,
+        "rem_min": 96,
+        "light_min": 224,
+        "awake_min": 43,
+        "efficiency": 0.87,
+        "sleep_debt_min": 48,
+        "sleep_inertia_min": 32
+      }
+    },
+    {
+      "date": "2026-01-27",
+      "steps": 10110,
+      "hrv": 50,
+      "resting_hr": 59,
+      "blood_pressure": { "systolic": 119, "diastolic": 77 },
+      "spo2": 98,
+      "resp_rate": 14.9,
+      "sleep": {
+        "bedtime": "23:05",
+        "wake": "07:10",
+        "total_min": 470,
+        "deep_min": 96,
+        "rem_min": 104,
+        "light_min": 230,
+        "awake_min": 40,
+        "efficiency": 0.89,
+        "sleep_debt_min": 35,
+        "sleep_inertia_min": 28
+      }
+    },
+    {
+      "date": "2026-01-28",
+      "steps": 11240,
+      "hrv": 53,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 118, "diastolic": 76 },
+      "spo2": 98,
+      "resp_rate": 14.7,
+      "sleep": {
+        "bedtime": "23:18",
+        "wake": "07:02",
+        "total_min": 466,
+        "deep_min": 92,
+        "rem_min": 108,
+        "light_min": 228,
+        "awake_min": 38,
+        "efficiency": 0.89,
+        "sleep_debt_min": 36,
+        "sleep_inertia_min": 26
+      }
+    },
+    {
+      "date": "2026-01-29",
+      "steps": 9450,
+      "hrv": 51,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 118, "diastolic": 75 },
+      "spo2": 98,
+      "resp_rate": 15.0,
+      "sleep": {
+        "bedtime": "23:41",
+        "wake": "07:03",
+        "total_min": 435,
+        "deep_min": 84,
+        "rem_min": 96,
+        "light_min": 212,
+        "awake_min": 43,
+        "efficiency": 0.86,
+        "sleep_debt_min": 54,
+        "sleep_inertia_min": 34
+      }
+    },
+    {
+      "date": "2026-01-30",
+      "steps": 12180,
+      "hrv": 55,
+      "resting_hr": 57,
+      "blood_pressure": { "systolic": 117, "diastolic": 75 },
+      "spo2": 98,
+      "resp_rate": 14.8,
+      "sleep": {
+        "bedtime": "22:58",
+        "wake": "07:12",
+        "total_min": 492,
+        "deep_min": 106,
+        "rem_min": 120,
+        "light_min": 230,
+        "awake_min": 36,
+        "efficiency": 0.91,
+        "sleep_debt_min": 22,
+        "sleep_inertia_min": 22
+      }
+    },
+    {
+      "date": "2026-01-31",
+      "steps": 10640,
+      "hrv": 52,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 119, "diastolic": 76 },
+      "spo2": 97,
+      "resp_rate": 15.2,
+      "sleep": {
+        "bedtime": "23:10",
+        "wake": "07:05",
+        "total_min": 465,
+        "deep_min": 96,
+        "rem_min": 104,
+        "light_min": 222,
+        "awake_min": 43,
+        "efficiency": 0.88,
+        "sleep_debt_min": 35,
+        "sleep_inertia_min": 27
+      }
+    },
+    {
+      "date": "2026-02-01",
+      "steps": 9850,
+      "hrv": 49,
+      "resting_hr": 60,
+      "blood_pressure": { "systolic": 121, "diastolic": 78 },
+      "spo2": 97,
+      "resp_rate": 15.6,
+      "sleep": {
+        "bedtime": "23:36",
+        "wake": "07:04",
+        "total_min": 438,
+        "deep_min": 86,
+        "rem_min": 96,
+        "light_min": 214,
+        "awake_min": 42,
+        "efficiency": 0.86,
+        "sleep_debt_min": 50,
+        "sleep_inertia_min": 33
+      }
+    },
+    {
+      "date": "2026-02-02",
+      "steps": 10920,
+      "hrv": 54,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 118, "diastolic": 76 },
+      "spo2": 98,
+      "resp_rate": 14.9,
+      "sleep": {
+        "bedtime": "23:08",
+        "wake": "07:15",
+        "total_min": 482,
+        "deep_min": 102,
+        "rem_min": 114,
+        "light_min": 228,
+        "awake_min": 38,
+        "efficiency": 0.9,
+        "sleep_debt_min": 28,
+        "sleep_inertia_min": 24
+      }
+    },
+    {
+      "date": "2026-02-03",
+      "steps": 11690,
+      "hrv": 56,
+      "resting_hr": 57,
+      "blood_pressure": { "systolic": 117, "diastolic": 75 },
+      "spo2": 98,
+      "resp_rate": 14.7,
+      "sleep": {
+        "bedtime": "23:00",
+        "wake": "07:22",
+        "total_min": 494,
+        "deep_min": 108,
+        "rem_min": 120,
+        "light_min": 230,
+        "awake_min": 36,
+        "efficiency": 0.91,
+        "sleep_debt_min": 18,
+        "sleep_inertia_min": 20
+      }
+    },
+    {
+      "date": "2026-02-04",
+      "steps": 9720,
+      "hrv": 51,
+      "resting_hr": 59,
+      "blood_pressure": { "systolic": 120, "diastolic": 77 },
+      "spo2": 97,
+      "resp_rate": 15.1,
+      "sleep": {
+        "bedtime": "23:27",
+        "wake": "07:08",
+        "total_min": 444,
+        "deep_min": 90,
+        "rem_min": 98,
+        "light_min": 216,
+        "awake_min": 40,
+        "efficiency": 0.87,
+        "sleep_debt_min": 46,
+        "sleep_inertia_min": 31
+      }
+    },
+    {
+      "date": "2026-02-05",
+      "steps": 10410,
+      "hrv": 53,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 118, "diastolic": 76 },
+      "spo2": 98,
+      "resp_rate": 14.9,
+      "sleep": {
+        "bedtime": "23:14",
+        "wake": "07:11",
+        "total_min": 470,
+        "deep_min": 98,
+        "rem_min": 108,
+        "light_min": 226,
+        "awake_min": 38,
+        "efficiency": 0.89,
+        "sleep_debt_min": 34,
+        "sleep_inertia_min": 26
+      }
+    },
+    {
+      "date": "2026-02-06",
+      "steps": 11360,
+      "hrv": 55,
+      "resting_hr": 57,
+      "blood_pressure": { "systolic": 117, "diastolic": 75 },
+      "spo2": 98,
+      "resp_rate": 14.8,
+      "sleep": {
+        "bedtime": "23:06",
+        "wake": "07:18",
+        "total_min": 492,
+        "deep_min": 104,
+        "rem_min": 118,
+        "light_min": 232,
+        "awake_min": 38,
+        "efficiency": 0.9,
+        "sleep_debt_min": 24,
+        "sleep_inertia_min": 22
+      }
+    },
+    {
+      "date": "2026-02-07",
+      "steps": 9860,
+      "hrv": 52,
+      "resting_hr": 58,
+      "blood_pressure": { "systolic": 118, "diastolic": 76 },
+      "spo2": 97,
+      "resp_rate": 15.0,
+      "sleep": {
+        "bedtime": "23:12",
+        "wake": "07:02",
+        "total_min": 470,
+        "deep_min": 98,
+        "rem_min": 112,
+        "light_min": 220,
+        "awake_min": 40,
+        "efficiency": 0.89,
+        "sleep_debt_min": 42,
+        "sleep_inertia_min": 30
+      }
+    }
+  ]
+}
