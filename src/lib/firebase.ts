@@ -13,3 +13,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Add scopes for Google Fit API
+googleProvider.addScope('https://www.googleapis.com/auth/fitness.activity.read');
+googleProvider.addScope('https://www.googleapis.com/auth/fitness.sleep.read');
+googleProvider.addScope('https://www.googleapis.com/auth/fitness.body.read');
+googleProvider.addScope('https://www.googleapis.com/auth/fitness.heart_rate.read');
