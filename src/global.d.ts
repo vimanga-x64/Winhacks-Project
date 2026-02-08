@@ -3,6 +3,11 @@ declare module '*.glb' {
   export default src;
 }
 
+declare module '*.json' {
+  const value: any;
+  export default value;
+}
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {

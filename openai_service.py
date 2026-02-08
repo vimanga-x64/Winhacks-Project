@@ -88,8 +88,9 @@ The response must:
 - Avoid extreme dieting advice.
 
 The output must be:
-- A single well-structured text (5–7 sentences).
-- With bullet points.
+- A single well-structured text (5–10 sentences).
+- No JSON.
+- No bullet points.
 - No headings.
 - Natural, professional tone.
 RESPONSE FORMAT:
