@@ -1,0 +1,508 @@
+.rd-root {
+  min-height: 100vh;
+  background: #090909;
+  color: #f3f3f3;
+}
+
+.rd-main {
+  width: 92%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.25rem 0 3.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.rd-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rd-hero h1 {
+  font-size: 2.4rem;
+  margin: 0.4rem 0;
+  font-family: "Bebas Neue", "Oswald", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.rd-hero p {
+  color: rgba(255,255,255,0.65);
+  max-width: 520px;
+}
+
+.rd-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
+}
+
+.rd-hero-cards {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rd-mini-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.rd-mini-card span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+}
+
+.rd-mini-card strong {
+  font-size: 1.3rem;
+}
+
+.rd-mini-card small {
+  color: rgba(255,255,255,0.55);
+}
+
+.rd-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.rd-card {
+  background: rgba(15,15,15,0.92);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 1.4rem;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+}
+
+.rd-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rd-card-header h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+}
+
+.rd-card-header span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+}
+
+.rd-card--rings { grid-column: span 5; }
+.rd-card--sleep { grid-column: span 7; }
+.rd-card--energy { grid-column: span 7; }
+.rd-card--food { grid-column: span 5; }
+.rd-card--stress { grid-column: span 12; }
+.rd-card--tips { grid-column: span 12; }
+
+.rd-rings {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: center;
+  justify-items: center;
+}
+
+.rd-rings-chart {
+  position: relative;
+  height: 320px;
+  width: 320px;
+  justify-self: center;
+}
+
+.rd-rings-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.2rem;
+  pointer-events: none;
+}
+
+.rd-rings-center strong {
+  font-size: 1.6rem;
+}
+
+.rd-rings-center span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.6);
+}
+
+.rd-rings-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 0.6rem;
+  justify-self: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.rd-ring-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.rd-ring-row strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.rd-ring-row small {
+  color: rgba(255,255,255,0.55);
+}
+
+.rd-ring-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.rd-sleep-times {
+  display: flex;
+  gap: 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+.rd-sleep-times small {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+}
+
+.rd-sleep-times strong {
+  font-size: 0.95rem;
+}
+
+.rd-sleep-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 0.4rem;
+}
+
+.rd-sleep-seg { height: 100%; }
+.rd-deep { background: linear-gradient(90deg, #1e90ff, #4f46e5); }
+.rd-rem { background: linear-gradient(90deg, #ff4fd8, #ff7b54); }
+.rd-light { background: linear-gradient(90deg, #00f5a0, #22c55e); }
+.rd-awake { background: linear-gradient(90deg, #ffd166, #ff9f1c); }
+
+.rd-sleep-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0.8rem;
+}
+
+.rd-sleep-curve {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.55rem 0.6rem 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.rd-sleep-timeline {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  align-items: stretch;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rd-sleep-cell {
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+.rd-sleep-cell--deep { background: #2563eb; }
+.rd-sleep-cell--rem { background: #ec4899; }
+.rd-sleep-cell--light { background: #22c55e; }
+.rd-sleep-cell--awake { background: #f59e0b; }
+
+.rd-sleep-timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.4rem;
+}
+
+.rd-metric-row {
+  display: flex;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.rd-metric-row small {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+}
+
+.rd-energy-chart {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.85rem;
+  margin-bottom: 0.85rem;
+  position: relative;
+}
+
+.rd-energy-line {
+  fill: none;
+  stroke: #ff4fd8;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 12px rgba(255,79,216,0.35));
+}
+
+.rd-energy-tooltip {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  background: rgba(10,10,10,0.85);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rd-energy-windows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.rd-energy-windows small {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+}
+
+.rd-nutrition-chart {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.rd-food-line {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 2.2;
+}
+
+.rd-food-target {
+  stroke: rgba(255,255,255,0.28);
+  stroke-dasharray: 6 6;
+  stroke-width: 1.4;
+}
+
+.rd-food-bar {
+  fill: rgba(255,255,255,0.12);
+}
+
+.rd-food-bar--surplus {
+  fill: #ff8c42;
+}
+
+.rd-food-bar--deficit {
+  fill: #00f5a0;
+}
+
+.rd-food-bar--target {
+  fill: #8f9fb5;
+}
+
+.rd-nutrition-summary {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.65);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.rd-stress-meter {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.rd-stress-chart {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.85rem 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.rd-stress-line {
+  fill: none;
+  stroke: #ffb020;
+  stroke-width: 2;
+}
+.rd-stress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffb020, #ff4d6d);
+}
+
+.rd-stress-meta {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.rd-card--tips {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at top right, rgba(59,130,246,0.15), transparent 50%), rgba(15,15,15,0.95);
+  padding: 2.2rem;
+  min-height: 420px;
+}
+
+.rd-action {
+  background: #ef4444;
+  border: none;
+  color: #fff;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.rd-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rd-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.rd-tip-block {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.2rem;
+}
+
+.rd-tip-block ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  color: rgba(255,255,255,0.75);
+}
+
+.rd-tip-block li {
+  line-height: 1.45;
+}
+
+.rd-tip-title {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.55);
+}
+
+.rd-tip-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  color: rgba(255,255,255,0.65);
+  max-width: 520px;
+}
+
+.rd-tip-icons {
+  display: flex;
+  gap: 0.8rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+}
+
+@media (max-width: 1100px) {
+  .rd-card--rings,
+  .rd-card--sleep,
+  .rd-card--stress,
+  .rd-card--energy,
+  .rd-card--food {
+    grid-column: span 12;
+  }
+  .rd-rings {
+    grid-template-columns: 1fr;
+  }
+  .rd-rings-legend {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+  .rd-energy-windows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .rd-main {
+    width: 94%;
+  }
+  .rd-energy-windows {
+    grid-template-columns: 1fr;
+  }
+  .rd-hero h1 {
+    font-size: 2rem;
+  }
+  .rd-rings-chart {
+    height: 240px;
+    width: 240px;
+  }
+  .rd-rings-legend {
+    grid-template-columns: 1fr;
+  }
+}

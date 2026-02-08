@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import LandingPage from "./components/LandingPage";
 import FitnessApp from "./FitnessApp";
 import Login from "./components/Login";
+import RecoveryDashboard from "./components/RecoveryDashboard";
 import { useAuth } from "./context/AuthContext";
 
 type UnitSystem = "metric" | "imperial";
@@ -24,6 +25,7 @@ interface UserData {
 function App() {
   const { user } = useAuth();
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
   const [isAttemptingLogin, setIsAttemptingLogin] = useState(false);
   const [userData, setUserData] = useState<(UserData & { units: UnitSystem }) | null>(null);
 
@@ -43,6 +45,7 @@ function App() {
       // Reset state on logout
       setUserData(null);
       setShowDashboard(false);
+      setShowRecovery(false);
       setIsAttemptingLogin(false);
     }
   }, [user]);
@@ -50,6 +53,7 @@ function App() {
   const handleComplete = (data: UserData & { units: UnitSystem }) => {
     setUserData(data);
     setShowDashboard(true);
+    setShowRecovery(false);
     
     // Save to LocalStorage
     if (user) {
@@ -63,17 +67,38 @@ function App() {
     }
   };
 
-  // 1. If we are in the dashboard and have data, show it
-  if (user && showDashboard && userData) {
-    return <FitnessApp userData={userData} onBack={() => setShowDashboard(false)} />;
+  // 1. If we are in the recovery dashboard and have data, show it
+  if (user && showDashboard && showRecovery && userData) {
+    return (
+      <RecoveryDashboard
+        onBack={() => setShowRecovery(false)}
+        userProfile={{
+          name: userData.name,
+          goal: userData.fitnessGoal,
+          activityLevel: userData.activityLevel,
+          targetWeight: userData.targetweight
+        }}
+      />
+    );
   }
 
-  // 2. If user clicked "Get Started" but isn't logged in, show login
+  // 2. If we are in the main dashboard and have data, show it
+  if (user && showDashboard && userData) {
+    return (
+      <FitnessApp
+        userData={userData}
+        onBack={() => setShowDashboard(false)}
+        onOpenRecovery={() => setShowRecovery(true)}
+      />
+    );
+  }
+
+  // 3. If user clicked "Get Started" but isn't logged in, show login
   if (!user && isAttemptingLogin) {
     return <Login />;
   }
 
-  // 3. Default: Show Landing Page
+  // 4. Default: Show Landing Page
   return (
     <LandingPage 
       onComplete={handleComplete} 

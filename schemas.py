@@ -20,3 +20,16 @@ class SummaryRequest(BaseModel):
 
 class RecommendationResponse(BaseModel):
     recommendation: str
+
+
+class RecoveryRequest(BaseModel):
+    user_profile: dict
+    sleep_summary: dict
+    recovery_metrics: dict
+    nutrition: dict
+    stress: dict
+    energy_curve: list
+
+
+class RecoveryResponse(BaseModel):
+    recovery_tips: dict

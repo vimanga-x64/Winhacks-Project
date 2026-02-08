@@ -133,6 +133,18 @@
   border-radius: 999px;
 }
 
+.fa-header-tag--button {
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.fa-header-tag--button:hover {
+  color: #ffffff;
+  border-color: rgba(239,68,68,0.5);
+  box-shadow: 0 0 14px rgba(239,68,68,0.2);
+}
+
 .fa-back-btn {
   display: inline-flex;
   align-items: center;
@@ -268,7 +280,7 @@
   width: 100%;
   height: 260px;
   background: radial-gradient(circle at 50% 50%, rgba(239,68,68,0.12), transparent 70%);
-  transform: translateY(-12px);
+  transform: translateY(-22px);
 }
 
 .fa-recommendation-model-label {
@@ -998,5 +1010,399 @@ select.fa-entry-input option {
   }
   .fa-header-inner {
     padding: 0.75rem 0;
+  }
+}
+
+/* ---------- HEALTH DASHBOARD ---------- */
+.fa-health {
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(12,12,12,0.98), rgba(20,20,20,0.95));
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.fa-health-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.fa-health-kicker {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.45);
+}
+
+.fa-health-title {
+  font-size: 2rem;
+  margin: 0.35rem 0 0.4rem;
+  font-family: "Bebas Neue", "Oswald", sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.fa-health-subtitle {
+  max-width: 480px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+}
+
+.fa-health-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.fa-health-meta-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 120px;
+}
+
+.fa-health-meta-item span {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.45);
+}
+
+.fa-health-meta-item strong {
+  font-size: 0.95rem;
+}
+
+.fa-health-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.fa-health-card {
+  background: rgba(13,13,13,0.9);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 1.4rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.fa-health-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(239,68,68,0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.fa-health-card:hover::after {
+  opacity: 1;
+}
+
+.fa-health-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.fa-health-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fa-health-card-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(239,68,68,0.8);
+}
+
+.fa-health-card--kpi {
+  grid-column: span 5;
+}
+
+.fa-health-card--sleep {
+  grid-column: span 7;
+}
+
+.fa-health-card--energy {
+  grid-column: span 7;
+}
+
+.fa-health-card--trends {
+  grid-column: span 5;
+}
+
+.fa-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.fa-kpi {
+  padding: 0.8rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+
+.fa-kpi-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+}
+
+.fa-kpi-value {
+  font-size: 1.35rem;
+  margin-top: 0.25rem;
+}
+
+.fa-kpi-sub {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.fa-sleep-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.fa-sleep-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+}
+
+.fa-sleep-bar-seg {
+  height: 100%;
+}
+
+.fa-sleep-bar-deep {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.fa-sleep-bar-rem {
+  background: linear-gradient(90deg, #ec4899, #f97316);
+}
+
+.fa-sleep-bar-light {
+  background: linear-gradient(90deg, #14b8a6, #22c55e);
+}
+
+.fa-sleep-bar-awake {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.fa-sleep-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.fa-sleep-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.fa-sleep-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.fa-dot-deep { background: #3b82f6; }
+.fa-dot-rem { background: #ec4899; }
+.fa-dot-light { background: #22c55e; }
+.fa-dot-awake { background: #f59e0b; }
+
+.fa-sleep-metrics {
+  margin-top: 1.2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.fa-sleep-metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+}
+
+.fa-sleep-metric-value {
+  font-size: 1rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.fa-sleep-meter {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.fa-sleep-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(239,68,68,0.9), rgba(249,115,22,0.9));
+}
+
+.fa-sleep-meter-fill--cool {
+  background: linear-gradient(90deg, rgba(56,189,248,0.9), rgba(59,130,246,0.9));
+}
+
+.fa-sleep-meter-fill--mint {
+  background: linear-gradient(90deg, rgba(34,197,94,0.9), rgba(20,184,166,0.9));
+}
+
+.fa-energy-chart {
+  position: relative;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+}
+
+.fa-energy-line {
+  fill: none;
+  stroke: #ef4444;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 8px rgba(239,68,68,0.35));
+}
+
+.fa-energy-dot {
+  fill: rgba(255,255,255,0.35);
+  transition: r 0.2s ease, fill 0.2s ease;
+}
+
+.fa-energy-dot--active {
+  fill: #f97316;
+}
+
+.fa-energy-tooltip {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(10,10,10,0.8);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.fa-energy-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.fa-energy-foot-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 140px;
+}
+
+.fa-energy-foot-item span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+}
+
+.fa-trend-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.fa-trend-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0.8rem;
+}
+
+.fa-trend-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0.4rem;
+}
+
+.fa-trend-line {
+  fill: none;
+  stroke-width: 2.2;
+}
+
+.fa-trend-line--steps {
+  stroke: #22c55e;
+}
+
+.fa-trend-line--hrv {
+  stroke: #38bdf8;
+}
+
+.fa-trend-line--sleep {
+  stroke: #f97316;
+}
+
+.fa-trend-meta {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 1100px) {
+  .fa-health-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .fa-health-card--kpi,
+  .fa-health-card--trends {
+    grid-column: span 6;
+  }
+  .fa-health-card--sleep,
+  .fa-health-card--energy {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 720px) {
+  .fa-health {
+    padding: 1.5rem;
+  }
+  .fa-health-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .fa-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .fa-sleep-metrics {
+    grid-template-columns: 1fr;
+  }
+  .fa-energy-footer {
+    flex-direction: column;
   }
 }
