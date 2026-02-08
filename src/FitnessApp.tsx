@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download } from 'lucide-react';
+import { Utensils, Unlock, Flame, HeartPulse, Edit2, Check, User, ArrowLeft, Download, LogOut } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PdfReport from './components/PdfReport';
+import { useAuth } from './context/AuthContext';
 import './FitnessApp.css';
 
 // --- Types ---
@@ -52,6 +53,7 @@ interface FitnessAppProps {
 }
 
 const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
+  const { logout } = useAuth();
   // --- General Stats State ---
   const [isSummarized, setIsSummarized] = useState(false);
   const [editingBio, setEditingBio] = useState(false); // Toggle for bio editing
@@ -455,6 +457,9 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack }) => {
                 <ArrowLeft size={14} /> Home
               </button>
             )}
+            <button className="fa-back-btn" onClick={logout} style={{ marginLeft: '1rem', color: '#ef4444' }}>
+              <LogOut size={14} /> Logout
+            </button>
           </div>
         </div>
       </header>

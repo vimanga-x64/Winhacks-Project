@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import "./LandingPage.css";
 import heroImg from "../assets/David_goggins.png";
 import formBgImg from "../assets/goggins_signinpage.jpg";
+import { useAuth } from "../context/AuthContext";
+import { LogOut } from "lucide-react";
 
 type UnitSystem = "metric" | "imperial";
 
@@ -43,9 +45,11 @@ const QUOTES = [
 
 interface LandingPageProps {
   onComplete?: (data: UserData & { units: UnitSystem }) => void;
+  onStart?: () => void;
 }
 
-export default function LandingPage({ onComplete }: LandingPageProps) {
+export default function LandingPage({ onComplete, onStart }: LandingPageProps) {
+  const { logout, user } = useAuth();
   // 0 = hero, 1 = transition, 2 = form, 3 = done
   const [step, setStep] = useState(0);
   const [units, setUnits] = useState<UnitSystem>("metric");
@@ -92,6 +96,15 @@ export default function LandingPage({ onComplete }: LandingPageProps) {
     else setStep(0);
   };
 
+  const handleJoinClick = () => {
+    if (user) {
+      setStep(1);
+      setTransitionPhase(0);
+    } else if (onStart) {
+      onStart();
+    }
+  };
+
   return (
     <div className="lp-root">
       {/* abstract bg shapes */}
@@ -122,9 +135,17 @@ export default function LandingPage({ onComplete }: LandingPageProps) {
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#about">About</a>
+            {user && (
+              <button 
+                onClick={logout} 
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <LogOut size={16} /> Logout
+              </button>
+            )}
           </nav>
-          <button className="lp-nav-join" onClick={() => { setStep(1); setTransitionPhase(0); }}>
-            Join Now
+          <button className="lp-nav-join" onClick={handleJoinClick}>
+            {user ? 'Onboarding' : 'Join Now'}
           </button>
         </header>
 
@@ -137,7 +158,7 @@ export default function LandingPage({ onComplete }: LandingPageProps) {
           <p className="lp-hero-sub">
             Track every rep, every mile, every goal — and watch yourself evolve.
           </p>
-          <button className="lp-cta" onClick={() => { setStep(1); setTransitionPhase(0); }}>
+          <button className="lp-cta" onClick={handleJoinClick}>
             Get Started
           </button>
         </div>
