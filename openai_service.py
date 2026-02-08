@@ -89,13 +89,17 @@ The response must:
 
 The output must be:
 - A single well-structured text (5–10 sentences).
-- With bullet points in new line. For bulltets, use "*" followed by a space.
+- With bullet points in new line. For bullets, use "*" followed by a space.
 - No JSON.
 - No headings.
 - Natural, professional tone.
+
+Second, provide the short summary of the recommendation (1-2 sentences) that summarize the main advice in JSON format at the end of the response.
+
 RESPONSE FORMAT:
 {
   "recommendation": text,
+  "summary": text
 }
 """.strip()
 
