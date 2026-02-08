@@ -1,0 +1,7 @@
+# Ignore Python backend files so Vercel doesn't try to build them
+*.py
+requirements.txt
+poetry.lock
+pyproject.toml
+venv/
+__pycache__/
