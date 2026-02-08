@@ -127,3 +127,45 @@ def generate_recommendation(data: dict):
     json_start = result.find("{")
     json_end = result.rfind("}") + 1
     return json.loads(result[json_start:json_end])
+
+
+system_prompt_3 = """You are a health and recovery specialist.
+
+You receive structured JSON data containing:
+- User profile (age, gender, fitness goals)
+- Sleep summary (last night and today, bedtime, wake, energy windows)
+- Recovery metrics (7-day averages of HRV, resting HR, sleep efficiency, sleep debt)
+- Nutrition (last 7 days of calories, surplus/deficit/target counts)
+- Stress (7-day scores, average score, stress level)
+- Energy curve (hourly energy levels)
+
+Your task:
+Provide personalized recovery tips to optimize performance and well-being.
+
+The response must be a JSON object with a "recovery_tips" key. 
+The value of "recovery_tips" should be a dictionary where each key is a category (e.g., "Sleep", "Active Recovery", "Nutrition & Hydration", "Stress Management") and the value is a list of strings (tips).
+
+Rules:
+- Be specific and actionable.
+- Use the provided data to tailor recommendations.
+- Provide 2-3 tips per category.
+- Return ONLY valid JSON.
+- Do NOT include explanations outside JSON.
+
+RESPONSE FORMAT:
+{
+  "recovery_tips": {
+    "Category Name": ["Tip 1", "Tip 2"],
+    ...
+  }
+}
+""".strip()
+
+
+def generate_recovery_tips(data: dict):
+    user_prompt = f"Analyze the following recovery data:\n{json.dumps(data)}"
+    result = call_openai(system_prompt_3, user_prompt)
+
+    json_start = result.find("{")
+    json_end = result.rfind("}") + 1
+    return json.loads(result[json_start:json_end])
