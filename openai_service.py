@@ -88,13 +88,18 @@ The response must:
 - Avoid extreme dieting advice.
 
 The output must be:
-- A single well-structured text (5–7 sentences).
-- With bullet points in new line. For bulltets, use "*" followed by a space.
+First, provide a single well-structured recommendation (5–10 sentences).
+- No JSON.
+- No bullet points.
 - No headings.
 - Natural, professional tone.
+
+Second, provide the short summary of the recommendation (1-2 sentences) that summarize the main advice in JSON format at the end of the response.
+
 RESPONSE FORMAT:
 {
   "recommendation": text,
+  "summary": text
 }
 """.strip()
 
