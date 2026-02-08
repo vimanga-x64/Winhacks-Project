@@ -213,7 +213,7 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
   
   // State for fetched Google Fit Data
   const [fitData, setFitData] = useState<DailyFitData[] | null>(null);
-  const [fitLoading, setFitLoading] = useState(false);
+  const [fitLoading, setFitLoading] = useState(!!googleAccessToken);
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   const syncData = () => {
@@ -424,6 +424,17 @@ const RecoveryDashboard: React.FC<RecoveryDashboardProps> = ({ onBack, userProfi
   useEffect(() => {
     fetchTips();
   }, [fitData]); // Re-fetch tips when data changes
+
+  // Show loading screen on first load if we have a token and are fetching
+  if (fitLoading && !fitData) {
+    return (
+      <div className="rd-loading-screen">
+        <Flame className="rd-loading-icon" size={64} />
+        <h2>Synchronizing Health Data</h2>
+        <p>Retrieving your latest metrics from Google Fit...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rd-root">

@@ -46,10 +46,12 @@ const QUOTES = [
 interface LandingPageProps {
   onComplete?: (data: UserData & { units: UnitSystem }) => void;
   onStart?: () => void;
+  onDashboard?: () => void;
+  hasUserData?: boolean;
   initialStep?: number;
 }
 
-export default function LandingPage({ onComplete, onStart, initialStep = 0 }: LandingPageProps) {
+export default function LandingPage({ onComplete, onStart, onDashboard, hasUserData, initialStep = 0 }: LandingPageProps) {
   const { logout, user } = useAuth();
   // 0 = hero, 1 = transition, 2 = form, 3 = done
   const [step, setStep] = useState(initialStep);
@@ -99,8 +101,12 @@ export default function LandingPage({ onComplete, onStart, initialStep = 0 }: La
 
   const handleJoinClick = () => {
     if (user) {
-      setStep(1);
-      setTransitionPhase(0);
+      if (hasUserData && onDashboard) {
+        onDashboard();
+      } else {
+        setStep(1);
+        setTransitionPhase(0);
+      }
     } else if (onStart) {
       onStart();
     }
@@ -146,7 +152,7 @@ export default function LandingPage({ onComplete, onStart, initialStep = 0 }: La
             )}
           </nav>
           <button className="lp-nav-join" onClick={handleJoinClick}>
-            {user ? 'Onboarding' : 'Join Now'}
+            {user ? (hasUserData ? 'Dashboard' : 'Onboarding') : 'Join Now'}
           </button>
         </header>
 
@@ -160,7 +166,7 @@ export default function LandingPage({ onComplete, onStart, initialStep = 0 }: La
             Track every rep, every mile, every goal — and watch yourself evolve.
           </p>
           <button className="lp-cta" onClick={handleJoinClick}>
-            Get Started
+            {user && hasUserData ? 'Go to Dashboard' : 'Get Started'}
           </button>
         </div>
 

@@ -506,3 +506,46 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Loading Screen */
+.rd-loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #090909;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.rd-loading-icon {
+  color: #ef4444;
+  animation: rdPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.4));
+}
+
+.rd-loading-screen h2 {
+  font-family: "Bebas Neue", "Oswald", sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.rd-loading-screen p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1rem;
+}
+
+@keyframes rdPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.7;
+  }
+}

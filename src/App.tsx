@@ -36,6 +36,7 @@ function App() {
       if (savedData) {
         setUserData(JSON.parse(savedData));
         setShowDashboard(true);
+        setIsAttemptingLogin(false);
       } else if (isAttemptingLogin) {
         // If they just logged in from the "Get Started" flow, 
         // they don't have saved data, so we don't need to do anything
@@ -54,6 +55,7 @@ function App() {
     setUserData(data);
     setShowDashboard(true);
     setShowRecovery(false);
+    setIsAttemptingLogin(false);
     
     // Save to LocalStorage
     if (user) {
@@ -102,7 +104,9 @@ function App() {
   return (
     <LandingPage 
       onComplete={handleComplete} 
-      onStart={handleStart} 
+      onStart={handleStart}
+      onDashboard={() => setShowDashboard(true)}
+      hasUserData={!!userData}
       initialStep={user && isAttemptingLogin ? 1 : 0} 
     />
   );
