@@ -736,16 +736,21 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
   const handleGainEnter = async (index: number) => {
     if (isSummarized) return;
     
+    const entryId = gainEntries[index]?.id;
+    if (entryId && gainTimersRef.current[entryId]) {
+      clearTimeout(gainTimersRef.current[entryId]!);
+      gainTimersRef.current[entryId] = null;
+    }
+
+    if (!gainEntries[index] || !gainEntries[index].input.trim() || gainEntries[index].loading || gainEntries[index].calories) return;
+
     setGainEntries((prev) => {
-      if (!prev[index] || !prev[index].input.trim()) return prev;
       const newEntries = [...prev];
       newEntries[index] = { ...newEntries[index], loading: true };
       return newEntries;
     });
 
     const currentEntry = gainEntries[index];
-    if (!currentEntry.input.trim()) return;
-
     // Call API
     const calories = await estimateEntry('food', currentEntry.input);
     
@@ -760,30 +765,48 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     setGainEntries((prev) => {
       const newEntries = [...prev];
       if (!newEntries[index]) return prev;
+      const oldInput = newEntries[index].input;
       newEntries[index] = { ...newEntries[index], input: value };
       
-      // If input is empty, clear calories
-      if (!value.trim()) {
+      // If input changed, clear calories
+      if (value !== oldInput) {
         newEntries[index].calories = null;
         newEntries[index].loading = false;
       }
       return newEntries;
     });
+
+    const entryId = gainEntries[index]?.id;
+    if (entryId) {
+      if (gainTimersRef.current[entryId]) {
+        clearTimeout(gainTimersRef.current[entryId]!);
+      }
+      if (value.trim()) {
+        gainTimersRef.current[entryId] = setTimeout(() => {
+          handleGainEnter(index);
+        }, 1500);
+      }
+    }
   };
 
   const handleLostEnter = async (index: number) => {
     if (isSummarized) return;
 
+    const entryId = lostEntries[index]?.id;
+    if (entryId && lostTimersRef.current[entryId]) {
+      clearTimeout(lostTimersRef.current[entryId]!);
+      lostTimersRef.current[entryId] = null;
+    }
+
+    if (!lostEntries[index] || !lostEntries[index].activity.trim() || !lostEntries[index].duration.trim() || lostEntries[index].loading || lostEntries[index].calories) return;
+
     setLostEntries((prev) => {
-      if (!prev[index] || !prev[index].activity.trim() || !prev[index].duration.trim()) return prev;
       const newEntries = [...prev];
       newEntries[index] = { ...newEntries[index], loading: true };
       return newEntries;
     });
 
     const currentEntry = lostEntries[index];
-    if (!currentEntry.activity.trim() || !currentEntry.duration.trim()) return; 
-
     const calories = await estimateEntry('activity', `${currentEntry.activity} for ${currentEntry.duration}`, parseFloat(stats.weight));
     
     setLostEntries((prev) => prev.map((entry, i) => 
@@ -797,15 +820,34 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
     setLostEntries((prev) => {
       const newEntries = [...prev];
       if (!newEntries[index]) return prev;
+      const oldActivity = newEntries[index].activity;
+      const oldDuration = newEntries[index].duration;
       newEntries[index] = { ...newEntries[index], [field]: value };
 
-      // If both fields are empty, clear calories
-      if (!newEntries[index].activity.trim() || !newEntries[index].duration.trim()) {
+      // If input changed, clear calories
+      if (newEntries[index].activity !== oldActivity || newEntries[index].duration !== oldDuration) {
         newEntries[index].calories = null;
         newEntries[index].loading = false;
       }
       return newEntries;
     });
+
+    const entryId = lostEntries[index]?.id;
+    if (entryId) {
+      if (lostTimersRef.current[entryId]) {
+        clearTimeout(lostTimersRef.current[entryId]!);
+      }
+      
+      const currentEntry = lostEntries[index];
+      const activity = field === 'activity' ? value : currentEntry.activity;
+      const duration = field === 'duration' ? value : currentEntry.duration;
+
+      if (activity.trim() && duration.trim()) {
+        lostTimersRef.current[entryId] = setTimeout(() => {
+          handleLostEnter(index);
+        }, 1500);
+      }
+    }
   };
 
   const handleOtherEnter = async (index: number) => {
@@ -849,6 +891,12 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
       lastSpokenRef.current = null;
       stopSpeaking();
     } else {
+      // Clear any pending timers
+      Object.values(gainTimersRef.current).forEach(t => t && clearTimeout(t));
+      gainTimersRef.current = {};
+      Object.values(lostTimersRef.current).forEach(t => t && clearTimeout(t));
+      lostTimersRef.current = {};
+
       // 1. Filter out completely empty entries first
       const validGains = gainEntries.filter(e => e.input.trim() !== '');
       const validLosts = lostEntries.filter(e => e.activity.trim() !== '' && e.duration.trim() !== '');
@@ -1267,7 +1315,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                   </select>
                   <input
                     ref={el => { gainInputRefs.current[entry.id] = el; }}
-                    disabled={isSummarized || entry.loading}
+                    disabled={isSummarized}
                     type="text"
                     placeholder="e.g. 2 eggs..."
                     className="fa-entry-input"
@@ -1312,7 +1360,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                 <div key={entry.id} className="fa-entry">
                   <select
                     ref={el => { lostInputRefs.current[`${entry.id}-act`] = el as any; }}
-                    disabled={isSummarized || entry.loading}
+                    disabled={isSummarized}
                     className="fa-entry-input"
                     value={entry.activity}
                     onChange={(e) => {
@@ -1334,7 +1382,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     <option value="Rowing">Rowing</option>
                   </select>
                   <input
-                    disabled={isSummarized || entry.loading}
+                    disabled={isSummarized}
                     type="text"
                     placeholder="30m"
                     className="fa-entry-input fa-entry-input--sm"
@@ -1377,7 +1425,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                 <div key={entry.id} className="fa-entry">
                   <select
                     ref={el => { otherInputRefs.current[`${entry.id}-cat`] = el as any; }}
-                    disabled={isSummarized || entry.loading}
+                    disabled={isSummarized}
                     className="fa-entry-input fa-entry-input--cat"
                     value={entry.category}
                     onChange={(e) => {
@@ -1397,7 +1445,7 @@ const FitnessApp: React.FC<FitnessAppProps> = ({ userData, onBack, onOpenRecover
                     <option value="Weight">Weight</option>
                   </select>
                   <input
-                    disabled={isSummarized || entry.loading}
+                    disabled={isSummarized}
                     type="text"
                     placeholder="Value / Note"
                     className="fa-entry-input"
