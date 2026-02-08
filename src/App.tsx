@@ -34,6 +34,10 @@ function App() {
       if (savedData) {
         setUserData(JSON.parse(savedData));
         setShowDashboard(true);
+      } else if (isAttemptingLogin) {
+        // If they just logged in from the "Get Started" flow, 
+        // they don't have saved data, so we don't need to do anything
+        // The render logic below will naturally show LandingPage step 1
       }
     } else {
       // Reset state on logout
@@ -70,7 +74,13 @@ function App() {
   }
 
   // 3. Default: Show Landing Page
-  return <LandingPage onComplete={handleComplete} onStart={handleStart} />;
+  return (
+    <LandingPage 
+      onComplete={handleComplete} 
+      onStart={handleStart} 
+      initialStep={user && isAttemptingLogin ? 1 : 0} 
+    />
+  );
 }
 
 export default App;

@@ -46,12 +46,13 @@ const QUOTES = [
 interface LandingPageProps {
   onComplete?: (data: UserData & { units: UnitSystem }) => void;
   onStart?: () => void;
+  initialStep?: number;
 }
 
-export default function LandingPage({ onComplete, onStart }: LandingPageProps) {
+export default function LandingPage({ onComplete, onStart, initialStep = 0 }: LandingPageProps) {
   const { logout, user } = useAuth();
   // 0 = hero, 1 = transition, 2 = form, 3 = done
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [units, setUnits] = useState<UnitSystem>("metric");
   const [data, setData] = useState<UserData>(INITIAL_DATA);
   const [formSection, setFormSection] = useState(0);
