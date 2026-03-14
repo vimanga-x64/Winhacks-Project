@@ -1464,6 +1464,8 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                 child: _editingBio
                     ? TextFormField(
                         initialValue: _profile.name,
+                        style: GoogleFonts.inter(color: Colors.white),
+                        cursorColor: const Color(0xFFEF4444),
                         onChanged: (v) => _profile = _copyProfile(name: v),
                         decoration: const InputDecoration(labelText: 'Name'),
                       )
@@ -1559,6 +1561,8 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
   Widget _editableField(String label, String value, void Function(String) onChanged) {
     return TextFormField(
       initialValue: value,
+      style: GoogleFonts.inter(color: Colors.white),
+      cursorColor: const Color(0xFFEF4444),
       onChanged: onChanged,
       decoration: InputDecoration(labelText: label),
     );
