@@ -1,7 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from schemas import EntryRequest, SummaryRequest, RecoveryRequest
-from openai_service import estimate_calories, generate_recommendation, generate_recovery_tips
+from schemas import EntryRequest, FoodIdentifyResponse, RecoveryRequest, SummaryRequest
+from openai_service import (
+    estimate_calories,
+    generate_recommendation,
+    generate_recovery_tips,
+    identify_food,
+)
 
 app = FastAPI(title="Fitness AI Backend")
 
@@ -38,5 +43,24 @@ def recovery(payload: RecoveryRequest):
     try:
         result = generate_recovery_tips(payload.dict())
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/identify-food", response_model=FoodIdentifyResponse)
+async def identify_food_endpoint(file: UploadFile = File(...)):
+    try:
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Uploaded file must be an image.")
+
+        image_bytes = await file.read()
+        result = identify_food(
+            image_bytes=image_bytes,
+            filename=file.filename,
+            content_type=file.content_type,
+        )
+        return {"description": result["description"]}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

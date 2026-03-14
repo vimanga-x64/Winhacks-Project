@@ -33,3 +33,7 @@ class RecoveryRequest(BaseModel):
 
 class RecoveryResponse(BaseModel):
     recovery_tips: dict
+
+
+class FoodIdentifyResponse(BaseModel):
+    description: str

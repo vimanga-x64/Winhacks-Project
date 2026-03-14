@@ -1,8 +1,15 @@
+import base64
 import json
+import mimetypes
+
+import requests
 from openai import OpenAI
+
 from config import OPENAI_API_KEY, MODEL_NAME
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 
 
 system_prompt_1 = """
@@ -173,3 +180,87 @@ def generate_recovery_tips(data: dict):
     json_start = result.find("{")
     json_end = result.rfind("}") + 1
     return json.loads(result[json_start:json_end])
+
+
+def _extract_response_text(result: dict) -> str:
+    output_text = (result.get("output_text") or "").strip()
+    if output_text:
+        return output_text
+
+    parts = []
+    for item in result.get("output", []):
+        if item.get("type") != "message":
+            continue
+        for content in item.get("content", []):
+            if content.get("type") == "output_text" and content.get("text"):
+                parts.append(content["text"])
+
+    return "\n".join(parts).strip()
+
+
+def _image_bytes_to_data_url(image_bytes: bytes, filename: str | None = None, content_type: str | None = None) -> str:
+    mime_type = content_type or mimetypes.guess_type(filename or "")[0] or "image/jpeg"
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def identify_food(image_bytes: bytes, filename: str | None = None, content_type: str | None = None, model: str = MODEL_NAME):
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is not configured.")
+    if not image_bytes:
+        raise ValueError("Image is empty.")
+
+    prompt = (
+        "You analyze a food photo and return exactly one short description in English. "
+        "Identify the dish and, when visible, estimate portion or count. "
+        "Examples: 'a bowl of pea soup, about 150 g' or 'fried eggs from 2 eggs and 1 sausage'. "
+        "Return JSON only with keys description, confidence, and assumptions. "
+        "description must be one short line in English. Use English words only, no Cyrillic. "
+        "confidence must be a number from 0 to 1. "
+        "assumptions must be a short English string with visual assumptions, or an empty string if none."
+    )
+
+    payload = {
+        "model": model,
+        "input": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {
+                        "type": "input_image",
+                        "image_url": _image_bytes_to_data_url(
+                            image_bytes=image_bytes,
+                            filename=filename,
+                            content_type=content_type,
+                        ),
+                    },
+                ],
+            }
+        ],
+    }
+
+    response = requests.post(
+        OPENAI_RESPONSES_URL,
+        headers={
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=120,
+    )
+    response.raise_for_status()
+    result = response.json()
+
+    raw_text = _extract_response_text(result)
+    if not raw_text:
+        raise ValueError(f"Empty model response: {json.dumps(result, ensure_ascii=False)[:1000]}")
+
+    json_start = raw_text.find("{")
+    json_end = raw_text.rfind("}") + 1
+    if json_start == -1 or json_end <= json_start:
+        raise ValueError(f"Expected JSON, got: {raw_text}")
+
+    parsed = json.loads(raw_text[json_start:json_end])
+    parsed["raw_response"] = raw_text
+    return parsed
