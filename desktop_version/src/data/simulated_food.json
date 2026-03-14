@@ -1,0 +1,11 @@
+{
+  "days": [
+    { "date": "2026-02-01", "calories": 2280, "target": 2100, "protein_g": 138, "carbs_g": 245, "fat_g": 68 },
+    { "date": "2026-02-02", "calories": 1980, "target": 2100, "protein_g": 124, "carbs_g": 210, "fat_g": 62 },
+    { "date": "2026-02-03", "calories": 2140, "target": 2100, "protein_g": 132, "carbs_g": 222, "fat_g": 66 },
+    { "date": "2026-02-04", "calories": 2420, "target": 2100, "protein_g": 142, "carbs_g": 260, "fat_g": 72 },
+    { "date": "2026-02-05", "calories": 2075, "target": 2100, "protein_g": 136, "carbs_g": 215, "fat_g": 64 },
+    { "date": "2026-02-06", "calories": 1890, "target": 2100, "protein_g": 120, "carbs_g": 200, "fat_g": 60 },
+    { "date": "2026-02-07", "calories": 2210, "target": 2100, "protein_g": 134, "carbs_g": 235, "fat_g": 67 }
+  ]
+}

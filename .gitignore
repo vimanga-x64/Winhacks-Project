@@ -25,5 +25,17 @@ dist-ssr
 .env
 __pycache__/
 *.pyc
+.env.*
 
-.e
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Android/iOS build outputs
+/android/app/debug
+/android/app/profile
+/android/app/release
