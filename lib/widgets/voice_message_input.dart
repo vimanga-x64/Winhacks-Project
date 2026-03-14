@@ -11,12 +11,14 @@ class VoiceMessageInput extends StatefulWidget {
     this.hintText = 'Type or speak your message',
     this.localeId = 'en_CA',
     this.enabled = true,
+    this.speechService,
   });
 
   final Future<void> Function(String text) onSubmit;
   final String hintText;
   final String localeId;
   final bool enabled;
+  final SpeechService? speechService;
 
   @override
   State<VoiceMessageInput> createState() => _VoiceMessageInputState();
@@ -25,6 +27,7 @@ class VoiceMessageInput extends StatefulWidget {
 class _VoiceMessageInputState extends State<VoiceMessageInput> {
   late final TextEditingController _controller;
   late final SpeechService _speechService;
+  late final bool _ownsSpeechService;
 
   bool _isListening = false;
   bool _speechReady = false;
@@ -39,19 +42,21 @@ class _VoiceMessageInputState extends State<VoiceMessageInput> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _speechService = SpeechService(
-      onSpeechResult: _onSpeechResult,
-      onSpeechError: _onSpeechError,
-      onSpeechStatus: _onSpeechStatus,
-      onSpeechLevel: _onSpeechLevel,
-    );
+    _ownsSpeechService = widget.speechService == null;
+    _speechService = widget.speechService ?? SpeechService();
+    _speechService.onSpeechResult = _onSpeechResult;
+    _speechService.onSpeechError = _onSpeechError;
+    _speechService.onSpeechStatus = _onSpeechStatus;
+    _speechService.onSpeechLevel = _onSpeechLevel;
     _initializeSpeech();
   }
 
   @override
   void dispose() {
     // Ensures we stop/cancel recognizer when widget leaves the tree.
-    _speechService.dispose();
+    if (_ownsSpeechService) {
+      _speechService.dispose();
+    }
     _controller.dispose();
     super.dispose();
   }

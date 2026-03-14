@@ -11,11 +11,13 @@ class ChatScreen extends StatefulWidget {
     super.key,
     required this.onSendMessage,
     this.title = 'Chat',
+    this.onBack,
   });
 
   // Keep backend flow outside the input widget via dependency injection.
   final Future<String> Function(String message) onSendMessage;
   final String title;
+  final VoidCallback? onBack;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -55,7 +57,15 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        leading: widget.onBack == null
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
+      ),
       body: Column(
         children: [
           Expanded(

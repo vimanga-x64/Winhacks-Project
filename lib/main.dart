@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'screens/chat_screen.dart';
+
 void main() {
   runApp(const FitTrackApp());
 }
@@ -290,6 +292,7 @@ class _FitTrackAppState extends State<FitTrackApp> {
   bool _ready = false;
   bool _authenticated = false;
   bool _showRecovery = false;
+  bool _showVoiceChat = false;
   UserProfile? _profile;
   String _backendUrl = 'http://10.0.2.2:8000';
   List<HealthDay> _healthDays = const [];
@@ -352,6 +355,7 @@ class _FitTrackAppState extends State<FitTrackApp> {
     setState(() {
       _authenticated = false;
       _showRecovery = false;
+      _showVoiceChat = false;
     });
   }
 
@@ -363,7 +367,35 @@ class _FitTrackAppState extends State<FitTrackApp> {
       _authenticated = false;
       _profile = null;
       _showRecovery = false;
+      _showVoiceChat = false;
     });
+  }
+
+  Future<String> _sendVoiceMessage(String message) async {
+    final profile = _profile;
+    if (profile == null) return 'Profile is unavailable. Please complete onboarding first.';
+
+    final api = BackendService(_backendUrl);
+    final payload = {
+      'measurement_system': profile.units == UnitSystem.imperial ? 'imperial' : 'metric',
+      'user_profile': profile.toJson(),
+      'metabolic_data': {
+        'estimated_daily_needs_kcal': 0,
+        'goal_adjustment_kcal': 0,
+        'goal': profile.fitnessGoal,
+      },
+      'daily_totals': {'in_kcal': 0, 'out_kcal': 0, 'net': 0},
+      'additional_info': {'voice_input': message},
+      'food_summary': const <String>[],
+      'activity_summary': const <String>[],
+    };
+
+    final response = await api.recommendation(payload);
+    final recommendation = (response['recommendation'] ?? '').trim();
+    final summary = (response['summary'] ?? '').trim();
+    if (recommendation.isNotEmpty) return recommendation;
+    if (summary.isNotEmpty) return summary;
+    return 'No response from coach.';
   }
 
   @override
@@ -425,6 +457,12 @@ class _FitTrackAppState extends State<FitTrackApp> {
         backendUrl: _backendUrl,
         onBack: () => setState(() => _showRecovery = false),
       );
+    } else if (_showVoiceChat) {
+      home = ChatScreen(
+        title: 'Voice Coach',
+        onBack: () => setState(() => _showVoiceChat = false),
+        onSendMessage: _sendVoiceMessage,
+      );
     } else {
       home = FitnessDashboardScreen(
         initialProfile: _profile!,
@@ -433,6 +471,7 @@ class _FitTrackAppState extends State<FitTrackApp> {
         backendUrl: _backendUrl,
         onSaveBackendUrl: _saveBackend,
         onShowRecovery: () => setState(() => _showRecovery = true),
+        onShowVoiceInput: () => setState(() => _showVoiceChat = true),
         onProfileUpdated: _saveProfile,
         onLogout: _logout,
         onSignOut: _signOut,
@@ -915,7 +954,7 @@ class _LandingOnboardingScreenState extends State<LandingOnboardingScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         dropdownColor: const Color(0xFF111111),
         style: GoogleFonts.inter(color: Colors.white),
         iconEnabledColor: Colors.white70,
@@ -941,6 +980,7 @@ class FitnessDashboardScreen extends StatefulWidget {
     required this.backendUrl,
     required this.onSaveBackendUrl,
     required this.onShowRecovery,
+    required this.onShowVoiceInput,
     required this.onProfileUpdated,
     required this.onLogout,
     required this.onSignOut,
@@ -952,6 +992,7 @@ class FitnessDashboardScreen extends StatefulWidget {
   final String backendUrl;
   final Future<void> Function(String) onSaveBackendUrl;
   final VoidCallback onShowRecovery;
+  final VoidCallback onShowVoiceInput;
   final Future<void> Function(UserProfile) onProfileUpdated;
   final Future<void> Function() onLogout;
   final Future<void> Function() onSignOut;
@@ -1720,7 +1761,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                   ? Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value: e.meal,
+                          initialValue: e.meal,
                           dropdownColor: const Color(0xFF111111),
                           style: GoogleFonts.inter(color: Colors.white),
                           decoration: const InputDecoration(isDense: true),
@@ -1776,7 +1817,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                         SizedBox(
                           width: 110,
                           child: DropdownButtonFormField<String>(
-                            value: e.meal,
+                            initialValue: e.meal,
                             dropdownColor: const Color(0xFF111111),
                             style: GoogleFonts.inter(color: Colors.white),
                             decoration: const InputDecoration(isDense: true),
@@ -1872,7 +1913,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                   ? Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value: e.activity,
+                          initialValue: e.activity,
                           dropdownColor: const Color(0xFF111111),
                           style: GoogleFonts.inter(color: Colors.white),
                           decoration: const InputDecoration(isDense: true),
@@ -1936,7 +1977,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                         SizedBox(
                           width: 138,
                           child: DropdownButtonFormField<String>(
-                            value: e.activity,
+                            initialValue: e.activity,
                             dropdownColor: const Color(0xFF111111),
                             style: GoogleFonts.inter(color: Colors.white),
                             decoration: const InputDecoration(isDense: true),
@@ -2037,7 +2078,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                   ? Column(
                       children: [
                         DropdownButtonFormField<String>(
-                          value: e.category,
+                          initialValue: e.category,
                           dropdownColor: const Color(0xFF111111),
                           style: GoogleFonts.inter(color: Colors.white),
                           decoration: const InputDecoration(isDense: true),
@@ -2094,7 +2135,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                         SizedBox(
                           width: 122,
                           child: DropdownButtonFormField<String>(
-                            value: e.category,
+                            initialValue: e.category,
                             dropdownColor: const Color(0xFF111111),
                             style: GoogleFonts.inter(color: Colors.white),
                             decoration: const InputDecoration(isDense: true),
@@ -2231,7 +2272,16 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
+            ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: isCompact ? double.infinity : null,
+          child: OutlinedButton.icon(
+            onPressed: widget.onShowVoiceInput,
+            icon: const Icon(Icons.mic),
+            label: const Text('Open Voice Coach'),
           ),
+        ),
       ],
     );
   }
