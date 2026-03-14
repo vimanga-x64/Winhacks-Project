@@ -349,6 +349,15 @@ class _FitTrackAppState extends State<FitTrackApp> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefAuth, false);
+    setState(() {
+      _authenticated = false;
+      _showRecovery = false;
+    });
+  }
+
+  Future<void> _signOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefAuth, false);
     await prefs.remove(_prefProfile);
     setState(() {
       _authenticated = false;
@@ -426,6 +435,7 @@ class _FitTrackAppState extends State<FitTrackApp> {
         onShowRecovery: () => setState(() => _showRecovery = true),
         onProfileUpdated: _saveProfile,
         onLogout: _logout,
+        onSignOut: _signOut,
       );
     }
 
@@ -933,6 +943,7 @@ class FitnessDashboardScreen extends StatefulWidget {
     required this.onShowRecovery,
     required this.onProfileUpdated,
     required this.onLogout,
+    required this.onSignOut,
   });
 
   final UserProfile initialProfile;
@@ -943,6 +954,7 @@ class FitnessDashboardScreen extends StatefulWidget {
   final VoidCallback onShowRecovery;
   final Future<void> Function(UserProfile) onProfileUpdated;
   final Future<void> Function() onLogout;
+  final Future<void> Function() onSignOut;
 
   @override
   State<FitnessDashboardScreen> createState() => _FitnessDashboardScreenState();
@@ -1227,16 +1239,9 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                     ],
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () async {
-                    await widget.onLogout();
-                  },
-                  icon: const Icon(Icons.logout, size: 20),
-                  tooltip: 'Logout',
-                ),
               ],
             ),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
@@ -1251,7 +1256,35 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => setState(() => _editingBio = !_editingBio),
                     icon: Icon(_editingBio ? Icons.check : Icons.edit, size: 16),
-                    label: Text(_editingBio ? 'Done Editing' : 'Edit Profile'),
+                    label: Text(_editingBio ? 'Done' : 'Edit Profile'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async => widget.onLogout(),
+                    icon: const Icon(Icons.logout, size: 16),
+                    label: const Text('Log Out'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white30),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async => widget.onSignOut(),
+                    icon: const Icon(Icons.power_settings_new, size: 16),
+                    label: const Text('Sign Out'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFEF4444),
+                      side: const BorderSide(color: Color(0xFFEF4444)),
+                    ),
                   ),
                 ),
               ],
@@ -1281,11 +1314,23 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
           ),
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: () async {
-              await widget.onLogout();
-            },
+            onPressed: () async => widget.onLogout(),
             icon: const Icon(Icons.logout, size: 16),
-            label: const Text('Logout'),
+            label: const Text('Log Out'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white70,
+              side: const BorderSide(color: Colors.white30),
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: () async => widget.onSignOut(),
+            icon: const Icon(Icons.power_settings_new, size: 16),
+            label: const Text('Sign Out'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+              side: const BorderSide(color: Color(0xFFEF4444)),
+            ),
           ),
         ],
       ),
@@ -1413,8 +1458,8 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
                     child: _metricBox(
                       'Weight',
                       _units == UnitSystem.metric
-                          ? '${_profile.weight} kg'
-                          : '${(_toDouble(_profile.weight) * 2.20462).toStringAsFixed(1)} lbs',
+                          ? '${_toKg(_weight).toStringAsFixed(1)} kg'
+                          : '${(_toKg(_weight) * 2.20462).toStringAsFixed(1)} lbs',
                     ),
                   ),
                   SizedBox(
