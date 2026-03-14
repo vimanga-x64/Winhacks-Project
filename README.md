@@ -1,52 +1,22 @@
-# FitTrack App
+# FitTrack Flutter Mobile (Android)
 
-FitTrack is a wellness and recovery assistant that brings activity tracking, nutrition insights, and progress reporting into a single, user-friendly experience. It is designed for students, employees, and anyone who wants a clear, actionable view of their health data.
+This folder contains an Android-focused Flutter clone of the desktop web app experience.
 
-## Snapshots
+## Included features
 
-<img width="1919" height="938" alt="image" src="https://github.com/user-attachments/assets/2aaff91a-5181-4481-b556-b7ba06aae95a" />
+- Landing screen and onboarding flow with dark/red visual style
+- Bio section, calorie strategy section, and 3-column tracker layout
+- Summarize Day flow with backend-driven calorie estimates and recommendation text
+- Recovery dashboard cards (rings, sleep, energy, nutrition, stress, AI tips)
+- Local persistence for auth state, profile, and backend URL
 
-<img width="1901" height="748" alt="image" src="https://github.com/user-attachments/assets/1dcd57a7-b513-4226-88ae-d6c85cd28581" />
+## Prerequisites
 
-<img width="1903" height="939" alt="image" src="https://github.com/user-attachments/assets/3cf018b5-d7c3-4892-a886-df4a4aef1c24" />
+- Flutter SDK (stable)
+- Android Studio / Android SDK
+- Python backend running from repository root:
 
-<img width="1907" height="740" alt="image" src="https://github.com/user-attachments/assets/a97a17e6-8df4-4ce8-bfa9-e119fed9f7ac" />
-
-<img width="1902" height="888" alt="image" src="https://github.com/user-attachments/assets/58b32231-4246-4309-be5f-e3853e14ff96" />
-
-<img width="1442" height="694" alt="image" src="https://github.com/user-attachments/assets/1265509a-ddc0-48d5-8eab-3b382871c5a8" />
-
-## Features
-- Personalized recovery dashboard with daily metrics
-- Nutrition and activity summaries based on simulated or connected data
-- PDF report generation for progress tracking
-- Authentication flow with a clean onboarding experience
-
-## Tech Stack
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- FastAPI
-
-## Getting Started
-### Prerequisites
-- Node.js 18+ (recommended)
-- Python 3.10+
-
-### Install
-```bash
-npm install
-pip install -r requirements.txt
-```
-
-### Run (Frontend)
-```bash
-npm run dev
-```
-
-### Run (Backend)
-```bash
+```powershell
 uvicorn main:app --reload
 ```
 
@@ -133,14 +103,27 @@ const handleFoodImageUpload = async (file: File) => {
 - Reuse the same `API_BASE_URL` pattern already used for `/estimate`, `/recommendation`, and `/recovery`.
 - Best insertion point is before the user submits a manual food text entry, so image recognition can prefill the text field.
 
-### Build
-```bash
-npm run build
+## Android run
+
+```powershell
+cd fittrack_flutter
+flutter pub get
+flutter run -d android
 ```
 
-## Project Structure
-- `src/` app source
-- `public/` static assets
-- `assets/screenshots/` screenshots used in README
-- `scripts/` data generation utilities
+## Backend URL for Android
 
+- Android emulator: `http://10.0.2.2:8000`
+- Physical Android device: use your machine LAN IP, for example `http://192.168.1.10:8000`
+
+You can edit and save this URL from the app Backend section.
+
+## Build APK
+
+```powershell
+flutter build apk --debug
+```
+
+Output:
+
+- `build/app/outputs/flutter-apk/app-debug.apk`
