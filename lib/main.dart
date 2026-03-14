@@ -990,11 +990,58 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
     super.dispose();
   }
 
-  double _toKg(double value) => _units == UnitSystem.metric ? value : value * 0.453592;
+  void _toggleUnits() {
+    final next = _units == UnitSystem.metric ? UnitSystem.imperial : UnitSystem.metric;
+
+    final currentWeight = _toDouble(_profile.weight);
+    final currentTarget = _toDouble(_profile.targetWeight);
+    final currentHeightCm = _heightCm;
+
+    final convertedWeight = next == UnitSystem.metric
+        ? currentWeight * 0.453592
+        : currentWeight * 2.20462;
+    final convertedTarget = next == UnitSystem.metric
+        ? currentTarget * 0.453592
+        : currentTarget * 2.20462;
+
+    String nextHeightCm = _profile.heightCm;
+    String nextHeightFt = _profile.heightFt;
+    String nextHeightIn = _profile.heightIn;
+
+    if (next == UnitSystem.metric) {
+      nextHeightCm = currentHeightCm > 0 ? currentHeightCm.round().toString() : '0';
+    } else {
+      final totalInches = currentHeightCm / 2.54;
+      final ft = totalInches ~/ 12;
+      final inch = (totalInches % 12).round();
+      nextHeightFt = ft.toString();
+      nextHeightIn = inch.toString();
+    }
+
+    setState(() {
+      _units = next;
+      _profile = UserProfile(
+        name: _profile.name,
+        age: _profile.age,
+        sex: _profile.sex,
+        heightCm: nextHeightCm,
+        heightFt: nextHeightFt,
+        heightIn: nextHeightIn,
+        weight: convertedWeight.toStringAsFixed(1),
+        targetWeight: convertedTarget.toStringAsFixed(1),
+        activityLevel: _profile.activityLevel,
+        fitnessGoal: _profile.fitnessGoal,
+        workoutFrequency: _profile.workoutFrequency,
+        units: next,
+      );
+    });
+  }
+
+  double _toKg(double value) => _profile.units == UnitSystem.metric ? value : value * 0.453592;
 
   double get _weight => double.tryParse(_profile.weight) ?? 0;
   double get _heightCm {
-    if (_units == UnitSystem.metric) {
+    if (_profile.units == UnitSystem.metric) {
       return double.tryParse(_profile.heightCm) ?? 0;
     }
     final ft = double.tryParse(_profile.heightFt) ?? 0;
@@ -1391,25 +1438,7 @@ class _FitnessDashboardScreenState extends State<FitnessDashboardScreen> {
             children: [
               _pillButton(
                 _units == UnitSystem.metric ? 'Metric' : 'Imperial',
-                onTap: () {
-                  setState(() {
-                    _units = _units == UnitSystem.metric ? UnitSystem.imperial : UnitSystem.metric;
-                    _profile = UserProfile(
-                      name: _profile.name,
-                      age: _profile.age,
-                      sex: _profile.sex,
-                      heightCm: _profile.heightCm,
-                      heightFt: _profile.heightFt,
-                      heightIn: _profile.heightIn,
-                      weight: _profile.weight,
-                      targetWeight: _profile.targetWeight,
-                      activityLevel: _profile.activityLevel,
-                      fitnessGoal: _profile.fitnessGoal,
-                      workoutFrequency: _profile.workoutFrequency,
-                      units: _units,
-                    );
-                  });
-                },
+                onTap: _toggleUnits,
               ),
               const Spacer(),
               IconButton(
